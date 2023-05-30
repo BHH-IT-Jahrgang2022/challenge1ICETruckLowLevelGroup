@@ -1,13 +1,11 @@
 #include <arduino.h>
 #include <Wire.h>
 
-int dhtSense = 11;
-int i2cSDA = 23;
-int i2cSCL = 24;
+int dhtSense = 21;
 
-int statLED = 10;
-int sendLED = 12;
-int senseLED = 13;
+int statLED = 2;
+int sendLED = 4;
+int senseLED = 15;
 
 void turnStatLEDOn() {
     digitalWrite(statLED, HIGH);
@@ -28,7 +26,7 @@ void setPinStatus() {
 }
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
     Serial.println("================================================");
     Serial.println("==== ESP32; challenge1ICETruck Arduino Code ====");
     Serial.println("==== Compiled on 30/05/2023 ====");
@@ -42,9 +40,8 @@ void setup() {
 
     Serial.println("==== Initialized pins ====");
 
-
     // I2C Init
-
+/*
     Serial.println("==== Initializing I2C ===");
     
     Serial.println("Setting pins...");
@@ -62,6 +59,8 @@ void setup() {
     }
     
     Serial.println("==== Initialized I2C ====");
+*/
+    // Init MQTT
 
     // End sequence
     Serial.println("==== Finished starting up ====");
@@ -73,4 +72,12 @@ void setup() {
 
 void loop() {
     // read out temp
+    digitalWrite(statLED, HIGH);
+    digitalWrite(sendLED, HIGH);
+    digitalWrite(senseLED, HIGH);
+    delay(500);
+    digitalWrite(statLED, LOW);
+    digitalWrite(sendLED, LOW);
+    digitalWrite(senseLED, LOW);
+    delay(500);
 }
