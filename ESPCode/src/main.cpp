@@ -33,16 +33,16 @@ void setup() {
     Serial.begin(115200);
     Serial.println("================================================");
     Serial.println("==== ESP32; challenge1ICETruck Arduino Code ====");
-    Serial.println("==== Compiled on 30/05/2023 ====");
-    Serial.println("==== Booting up ====");
+    Serial.println("==== Compiled on 30/05/2023                 ====");
+    Serial.println("==== Booting up                             ====");
 
     // Pin init
 
-    Serial.println("==== Initializing pins ====");
+    Serial.println("==== Initializing pins                      ====");
 
     setPinStatus();
 
-    Serial.println("==== Initialized pins ====");
+    Serial.println("==== Initialized pins                       ====");
 
     // I2C Init
 /*
@@ -66,7 +66,7 @@ void setup() {
 */
     // Init MQTT
 
-    Serial.println("==== Initializing MQTT ====");
+    Serial.println("==== Initializing MQTT                      ====");
         
     Serial.println("Login you in...");
     int resp = mqttHandler.authorize("domain", "username", "password");
@@ -78,12 +78,12 @@ void setup() {
     }
     Serial.println("Sending alive message");
     mqttHandler.sendAlive();
-    Serial.println("==== Initialized MQTT ====");
+    Serial.println("==== Initialized MQTT                       ====");
 
 
-    // End sequence
-    Serial.println("==== Finished starting up ====");
-    Serial.println("==== Starting main process ====");
+    // End sequence (cleaning up the rest)
+    Serial.println("====          Finished starting up          ====");
+    Serial.println("====          Starting main process         ====");
 
     Serial.println("================================================");
 
