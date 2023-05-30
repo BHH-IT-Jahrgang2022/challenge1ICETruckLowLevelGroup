@@ -1,11 +1,15 @@
 #include <arduino.h>
 #include <Wire.h>
 
+#include "mqttHandler.h"
+
 int dhtSense = 21;
 
 int statLED = 2;
 int sendLED = 4;
 int senseLED = 15;
+
+MQTTHandler mqttHandler;
 
 void turnStatLEDOn() {
     digitalWrite(statLED, HIGH);
@@ -61,6 +65,21 @@ void setup() {
     Serial.println("==== Initialized I2C ====");
 */
     // Init MQTT
+
+    Serial.println("==== Initializing MQTT ====");
+        
+    Serial.println("Login you in...");
+    int resp = mqttHandler.authorize("domain", "username", "password");
+    if (resp == -1) {
+        Serial.println("Login failed! Aborting!");
+        return;
+    } else {
+        Serial.println("Login successfull");
+    }
+    Serial.println("Sending alive message");
+    mqttHandler.sendAlive();
+    Serial.println("==== Initialized MQTT ====");
+
 
     // End sequence
     Serial.println("==== Finished starting up ====");
