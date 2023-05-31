@@ -1,5 +1,6 @@
 #include <arduino.h>
 #include <Wire.h>
+#include <WiFi.h>
 
 #include "mqttHandler.h"
 
