@@ -37,7 +37,7 @@ void initWiFi() {
 
     //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
   
-    WiFi.begin("TEST", "TEST!");
+   
 
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -112,8 +112,10 @@ void setup() {
 
     Serial.println("==== Initializing MQTT                      ====");
         
+    mqttHandler = MQTTHandler();
+
     Serial.println("Login you in...");
-    int resp = mqttHandler.authorize("domain", "username", "password");
+    int resp = mqttHandler.authorize("192.168.1.72", 1883, "low_level", "mqttguys");
     if (resp == -1) {
         Serial.println("Login failed! Aborting!");
         return;

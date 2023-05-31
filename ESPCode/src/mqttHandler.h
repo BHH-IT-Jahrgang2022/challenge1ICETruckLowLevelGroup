@@ -1,16 +1,23 @@
 #include "string"
+#include "PubSubClient.h"
+#include "WiFiClient.h"
 
 class MQTTHandler {
 public:
     MQTTHandler();
-    int authorize(std::string domain, std::string username, std::string password);
+    int authorize(std::string domain, int port, std::string username, std::string password);
     void sendMessage();
     void sendAlive();
+    void sendConnected();
     bool connected();
 
+    void callback(char* topic, byte *payload, unsigned int length);
+
 private:
-    std::string serverDomain;
-    std::string username;
-    std::string password;
+    PubSubClient pubSubClient;
+    std::string topicAlive = "/sensors/alive/";
+    std::string topicData = "/sensors/data/";
+    std::string topicControl = "/sensors/control/";
+    
 
 };
