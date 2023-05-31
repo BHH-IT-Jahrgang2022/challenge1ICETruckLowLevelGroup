@@ -1,8 +1,10 @@
 #include <arduino.h>
 //#include <Wire.h>
 #include <WiFi.h>
+#include <PubSubClient.h>
+#include <WiFiClient.h>
 
-#include "mqttHandler.h"
+//#include "mqttHandler.h"
 #include "datahelper.h"
 
 int dhtSense = 21;
@@ -11,10 +13,51 @@ int statLED = 2;
 int sendLED = 4;
 int senseLED = 15;
 
-MQTTHandler mqttHandler;
+
+WiFiClient wifiClient;
+PubSubClient pubSubClient;
 
 DataHelper datahelper;
 
+String clientid = "ESP32Sense1";
+String topicAlive = "/sensors/alive/ESP/";
+String topicData = "/sensors/data/ESP/";
+String topicControl = "/sensors/control/";
+
+const char* usernameMQTT = "low_level";
+const char* passwordMQTT = "mqttguys";
+
+void callback(char* topic, byte *payload, unsigned int length) {
+    Serial.println("------------new message from broker----------");
+    Serial.print("channel: ");
+    Serial.println(topic);
+    Serial.print("data: ");
+    Serial.write(payload, length);
+    Serial.println();
+}
+
+void initMQTT() {
+
+    pubSubClient = PubSubClient(wifiClient);
+
+    pubSubClient.setServer("pimqtt.local", 1883);
+    pubSubClient.setCallback(callback);
+
+    while(!pubSubClient.connected()) {
+        Serial.println("Attempting connection...");
+
+        if (pubSubClient.connect(clientid.c_str(), usernameMQTT, passwordMQTT)) {
+            Serial.println("MQTT connected");
+            pubSubClient.publish(topicAlive.c_str(), "connect");
+            pubSubClient.subscribe(topicControl.c_str());
+        } else {
+            Serial.print("Failed, trying again! REASON: ");
+            Serial.print(pubSubClient.state());
+            Serial.println("");
+            delay(2000);
+        }
+    }
+}
 
 void initWiFi() {
     Serial.println("Initializing SPFISS...");
@@ -37,7 +80,7 @@ void initWiFi() {
 
     //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
   
-   
+  
 
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -112,25 +155,17 @@ void setup() {
 
     Serial.println("==== Initializing MQTT                      ====");
         
-    mqttHandler = MQTTHandler();
+    initMQTT();
 
-    Serial.println("Login you in...");
-    int resp = mqttHandler.authorize("192.168.1.72", 1883, "low_level", "mqttguys");
-    if (resp == -1) {
-        Serial.println("Login failed! Aborting!");
-        return;
-    } else {
-        Serial.println("Login successfull");
-    }
-    Serial.println("Sending alive message");
-    mqttHandler.sendAlive();
     Serial.println("==== Initialized MQTT                       ====");
 
 
     // End sequence (cleaning up the rest)
     Serial.println("====          Finished starting up          ====");
     Serial.println("====          Starting main process         ====");
-
+    Serial.println("==== Communication alive to MQTT ====");
+    pubSubClient.publish(topicAlive.c_str(), "alive");
+    //mqttHandler.sendAlive();
     Serial.println("================================================");
 
 }
@@ -140,9 +175,11 @@ void loop() {
     digitalWrite(statLED, HIGH);
     digitalWrite(sendLED, HIGH);
     digitalWrite(senseLED, HIGH);
-    delay(500);
+    pubSubClient.publish(topicData.c_str(), "on");
+    delay(1000);
     digitalWrite(statLED, LOW);
     digitalWrite(sendLED, LOW);
     digitalWrite(senseLED, LOW);
-    delay(500);
+    pubSubClient.publish(topicData.c_str(), "off");
+    delay(1000);
 }
