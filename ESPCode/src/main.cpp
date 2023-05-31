@@ -1,8 +1,9 @@
 #include <arduino.h>
-#include <Wire.h>
+//#include <Wire.h>
 #include <WiFi.h>
 
 #include "mqttHandler.h"
+#include "datahelper.h"
 
 int dhtSense = 21;
 
@@ -11,6 +12,45 @@ int sendLED = 4;
 int senseLED = 15;
 
 MQTTHandler mqttHandler;
+
+DataHelper datahelper;
+
+
+void initWiFi() {
+    Serial.println("Initializing SPFISS...");
+
+    datahelper = DataHelper();
+
+    Serial.println("Connecting to WiFi...");
+
+    Serial.println("Loading credentials...");
+
+    std::array<std::string, 2> credentials = datahelper.getWiFiCredentials();
+
+    Serial.println("Connecting");
+    // TODO: Debug Wifi shit
+
+    Serial.println("*#*#*");
+    Serial.println(datahelper.getWiFiSSID().c_str());
+    Serial.println(datahelper.getWiFiPASSWD().c_str());
+    Serial.println("*#*#*");
+
+    //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
+  
+    WiFi.begin("TEST", "TEST!");
+
+    while(WiFi.status() != WL_CONNECTED) {
+        delay(1000);
+        Serial.println(WiFi.status());
+    }
+    Serial.println("");
+
+    Serial.println("Connected");
+
+    Serial.print("Your IP is: ");
+
+    Serial.println(WiFi.localIP().toString());
+}
 
 void turnStatLEDOn() {
     digitalWrite(statLED, HIGH);
@@ -65,6 +105,9 @@ void setup() {
     
     Serial.println("==== Initialized I2C ====");
 */
+    // Init WiFi
+    initWiFi();
+
     // Init MQTT
 
     Serial.println("==== Initializing MQTT                      ====");

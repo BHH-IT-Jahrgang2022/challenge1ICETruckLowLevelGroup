@@ -1,5 +1,5 @@
-#include "mqttHandler.h";
-#include "PubSubClient.h";
+#include "mqttHandler.h"
+#include "PubSubClient.h"
 
 MQTTHandler::MQTTHandler() {
 }
