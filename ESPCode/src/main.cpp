@@ -32,6 +32,9 @@ const int freq = 5000;
 const int ledChannel = 0;
 const int resolution = 8;
 
+const float targetTemp = -18.0;
+const float maxDiff = 13.0;
+
 void callback(char* topic, byte *payload, unsigned int length) {
     Serial.println("------------new message from broker----------");
     Serial.print("channel: ");
@@ -143,10 +146,20 @@ int tempBrightness(float temp) {
         return 0;
     }
     else {
-        float diff = -18.0 - temp;
+        float diff = targetTemp - temp;
+        if (diff > 0) {
+            float brightness = diff * 255 / maxDiff;
+            int brightnessInt =static_cast<int>(brightness);
+            return brightnessInt;
+        }
+        else {
+            diff = -diff;
+            float brightness = diff * 255 / maxDiff;
+            int brightnessInt =static_cast<int>(brightness);
+            return brightnessInt;
+        }
 
     }
-
 }
 
 void setup() {
