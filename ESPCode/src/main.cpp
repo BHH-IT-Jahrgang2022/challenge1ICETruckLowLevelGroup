@@ -1,4 +1,4 @@
-#include <arduino.h>
+#include <Arduino.h>
 //#include <Wire.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -22,8 +22,9 @@ DataHelper datahelper;
 String clientid = "ESP32Sense1";
 String topicAlive = "/sensors/alive/ESP/";
 String topicData = "/sensors/data/ESP/";
-String topicControl = "/sensors/control/";
+String topicControl = "/sensors/control/ESP/";
 
+const char* domain = "pi-johanna.local";
 const char* usernameMQTT = "low_level";
 const char* passwordMQTT = "mqttguys";
 
@@ -40,7 +41,7 @@ void initMQTT() {
 
     pubSubClient = PubSubClient(wifiClient);
 
-    pubSubClient.setServer("pimqtt.local", 1883);
+    pubSubClient.setServer(domain, 1883);
     pubSubClient.setCallback(callback);
 
     while(!pubSubClient.connected()) {
@@ -80,7 +81,7 @@ void initWiFi() {
 
     //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
   
-  
+
 
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -150,6 +151,10 @@ void setup() {
 */
     // Init WiFi
     initWiFi();
+
+    Serial.println("Waiting 5 seconds for connections to clean up...");
+
+    delay(10000);
 
     // Init MQTT
 
