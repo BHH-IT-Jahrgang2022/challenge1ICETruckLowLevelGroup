@@ -28,6 +28,10 @@ const char* domain = "pi-johanna.local";
 const char* usernameMQTT = "low_level";
 const char* passwordMQTT = "mqttguys";
 
+const int freq = 5000;
+const int ledChannel = 0;
+const int resolution = 8;
+
 void callback(char* topic, byte *payload, unsigned int length) {
     Serial.println("------------new message from broker----------");
     Serial.print("channel: ");
@@ -81,7 +85,7 @@ void initWiFi() {
 
     //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
   
-
+    
 
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -114,7 +118,39 @@ void setPinStatus() {
     pinMode(dhtSense, INPUT);
 }
 
+void LEDCSetup(int ledPin) {
+    ledcSetup(ledChannel, freq, resolution);
+    ledcAttachPin(ledPin, ledChannel);
+}
+
+void setLEDC(int brightness) {
+    if (brightness >= 0 && brightness <= 255) {
+        ledcWrite(ledChannel, brightness);
+    }
+    else if (brightness > 255) {
+        ledcWrite(ledChannel, 255);
+    }
+    else if (brightness < 0) {
+        ledcWrite(ledChannel, 0);
+    }
+    else {
+        Serial.print("ERROR: LEDC brightness is not an int");
+    }
+}
+
+int tempBrightness(float temp) {
+    if (temp == -18.0) {
+        return 0;
+    }
+    else {
+        float diff = -18.0 - temp;
+
+    }
+
+}
+
 void setup() {
+    
     Serial.begin(115200);
     Serial.println("================================================");
     Serial.println("==== ESP32; challenge1ICETruck Arduino Code ====");
@@ -128,9 +164,9 @@ void setup() {
     setPinStatus();
 
     Serial.println("==== Initialized pins                       ====");
-
-    // I2C Init
 /*
+    // I2C Init
+
     Serial.println("==== Initializing I2C ===");
     
     Serial.println("Setting pins...");
@@ -149,6 +185,7 @@ void setup() {
     
     Serial.println("==== Initialized I2C ====");
 */
+/*
     // Init WiFi
     initWiFi();
 
@@ -172,11 +209,14 @@ void setup() {
     pubSubClient.publish(topicAlive.c_str(), "alive");
     //mqttHandler.sendAlive();
     Serial.println("================================================");
+    */
 
+    LEDCSetup(senseLED);
 }
 
 void loop() {
     // read out temp
+    /*
     digitalWrite(statLED, HIGH);
     digitalWrite(sendLED, HIGH);
     digitalWrite(senseLED, HIGH);
@@ -187,4 +227,17 @@ void loop() {
     digitalWrite(senseLED, LOW);
     pubSubClient.publish(topicData.c_str(), "off");
     delay(1000);
+    */
+
+    for (int i = 0; i <= 255; i++) {
+        setLEDC(i);
+        delay(50);
+    }
+    Serial.println("==== Brightness of LED highest ===");
+
+    for (int i = 255; i >= 0; i--) {
+        setLEDC(i);
+        delay(50);
+    }
+    Serial.println("=== Brightness of LED low ===");
 }
