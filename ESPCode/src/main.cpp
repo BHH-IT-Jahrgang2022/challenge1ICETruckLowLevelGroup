@@ -31,6 +31,13 @@ const char* domain = "pi-johanna.local";
 const char* usernameMQTT = "low_level";
 const char* passwordMQTT = "mqttguys";
 
+const int freq = 5000;
+const int ledChannel = 0;
+const int resolution = 8;
+
+const float targetTemp = -18.0;
+const float maxDiff = 13.0;
+
 DHT dht(dhtSense, DHT22);
 
 void callback(char* topic, byte *payload, unsigned int length) {
@@ -123,6 +130,47 @@ void setPinStatus() {
     pinMode(dhtSense, INPUT);
 }
 
+void LEDCSetup(int ledPin) {
+    ledcSetup(ledChannel, freq, resolution);
+    ledcAttachPin(ledPin, ledChannel);
+}
+
+void setLEDC(int brightness) {
+    if (brightness >= 0 && brightness <= 255) {
+        ledcWrite(ledChannel, brightness);
+    }
+    else if (brightness > 255) {
+        ledcWrite(ledChannel, 255);
+    }
+    else if (brightness < 0) {
+        ledcWrite(ledChannel, 0);
+    }
+    else {
+        Serial.print("ERROR: LEDC brightness is not an int");
+    }
+}
+
+int tempBrightness(float temp) {
+    if (temp == -18.0) {
+        return 0;
+    }
+    else {
+        float diff = targetTemp - temp;
+        if (diff > 0) {
+            float brightness = diff * 255 / maxDiff;
+            int brightnessInt =static_cast<int>(brightness);
+            return brightnessInt;
+        }
+        else {
+            diff = -diff;
+            float brightness = diff * 255 / maxDiff;
+            int brightnessInt =static_cast<int>(brightness);
+            return brightnessInt;
+        }
+
+    }
+}
+
 float getTempReading() {
     float temp = dht.readTemperature();
     Serial.print("Temp: ");
@@ -141,6 +189,7 @@ void publishTempReading(float temp) {
 }
 
 void setup() {
+    
     Serial.begin(115200);
     Serial.println("================================================");
     Serial.println("==== ESP32; challenge1ICETruck Arduino Code ====");
@@ -154,9 +203,9 @@ void setup() {
     setPinStatus();
 
     Serial.println("==== Initialized pins                       ====");
-
-    // I2C Init
 /*
+    // I2C Init
+
     Serial.println("==== Initializing I2C ===");
     
     Serial.println("Setting pins...");
@@ -175,6 +224,7 @@ void setup() {
     
     Serial.println("==== Initialized I2C ====");
 */
+
     Serial.println("==== Initializing DHT Sensor ====");
 
     initDHT();
@@ -210,10 +260,21 @@ void setup() {
     Serial.println("================================================");
     
     turnStatLEDOn();
-
+    LEDCSetup(senseLED);
 }
 
 void loop() {
+    for (int i = 0; i <= 255; i++) {
+        setLEDC(i);
+        delay(50);
+    }
+    Serial.println("==== Brightness of LED highest ===");
+
+    for (int i = 255; i >= 0; i--) {
+        setLEDC(i);
+        delay(50);
+    }
+    Serial.println("=== Brightness of LED low ===");
     publishTempReading(getTempReading());
     delay(1000);
 }
