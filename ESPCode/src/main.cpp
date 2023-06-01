@@ -7,7 +7,10 @@
 //#include "mqttHandler.h"
 #include "datahelper.h"
 
-int dhtSense = 21;
+// sensor libs
+#include "DHT.h"
+
+int dhtSense = 23;
 
 int statLED = 2;
 int sendLED = 4;
@@ -27,6 +30,8 @@ String topicControl = "/sensors/control/ESP/";
 const char* domain = "pi-johanna.local";
 const char* usernameMQTT = "low_level";
 const char* passwordMQTT = "mqttguys";
+
+DHT dht(dhtSense, DHT22);
 
 void callback(char* topic, byte *payload, unsigned int length) {
     Serial.println("------------new message from broker----------");
@@ -81,7 +86,7 @@ void initWiFi() {
 
     //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
   
-
+    WiFi.begin("TEST", "TETS");
 
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -94,6 +99,10 @@ void initWiFi() {
     Serial.print("Your IP is: ");
 
     Serial.println(WiFi.localIP().toString());
+}
+
+void initDHT() {
+    dht.begin();
 }
 
 void turnStatLEDOn() {
@@ -112,6 +121,23 @@ void setPinStatus() {
 
     Serial.println("Setting dht sensor pin...");
     pinMode(dhtSense, INPUT);
+}
+
+float getTempReading() {
+    float temp = dht.readTemperature();
+    Serial.print("Temp: ");
+    Serial.print(temp);
+    Serial.println("°C");
+    return temp;
+}
+
+void publishTempReading(float temp) {
+    Serial.println("#*#*#");
+    Serial.println(temp);
+    std::string tempString = std::to_string(temp);
+    Serial.println(tempString.c_str());
+    Serial.println("#*#*#");
+    pubSubClient.publish(topicData.c_str(), tempString.c_str());
 }
 
 void setup() {
@@ -149,8 +175,18 @@ void setup() {
     
     Serial.println("==== Initialized I2C ====");
 */
+    Serial.println("==== Initializing DHT Sensor ====");
+
+    initDHT();
+
+    Serial.println("==== Initialized DHT Sensor ====");
+
+    Serial.println("==== Initializing WiFi ====");
+
     // Init WiFi
     initWiFi();
+
+    Serial.println("==== Initialized WiFi ====");
 
     Serial.println("Waiting 5 seconds for connections to clean up...");
 
@@ -172,19 +208,12 @@ void setup() {
     pubSubClient.publish(topicAlive.c_str(), "alive");
     //mqttHandler.sendAlive();
     Serial.println("================================================");
+    
+    turnStatLEDOn();
 
 }
 
 void loop() {
-    // read out temp
-    digitalWrite(statLED, HIGH);
-    digitalWrite(sendLED, HIGH);
-    digitalWrite(senseLED, HIGH);
-    pubSubClient.publish(topicData.c_str(), "on");
-    delay(1000);
-    digitalWrite(statLED, LOW);
-    digitalWrite(sendLED, LOW);
-    digitalWrite(senseLED, LOW);
-    pubSubClient.publish(topicData.c_str(), "off");
+    publishTempReading(getTempReading());
     delay(1000);
 }
