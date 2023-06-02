@@ -1,5 +1,5 @@
 import time
-#from model import *
+from thermo.models import *
 import mqttbroker as mqtt
 import threading
           
