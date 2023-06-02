@@ -10,5 +10,5 @@ class DatabaseManager:
         model_object.change_key = change_value
         self.persist(model_object)
     
-    def __init__(self, database):
-        self.database = database
+    def __init__(self):
+        pass
