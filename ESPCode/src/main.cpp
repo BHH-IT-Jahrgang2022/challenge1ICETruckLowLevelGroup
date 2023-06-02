@@ -151,7 +151,7 @@ void initWiFi() {
 
     //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
   
-    WiFi.begin("Test", "TEST");
+    WiFi.begin("Test", "Test");
 
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -304,14 +304,6 @@ void setup() {
     Serial.println("==== Compiled on 30/05/2023                 ====");
     Serial.println("==== Booting up                             ====");
 
-    // Pin init
-
-    Serial.println("==== Initializing pins                      ====");
-
-    setPinStatus();
-
-    Serial.println("==== Initialized pins                       ====");
-
 /*
     // I2C Init
 
@@ -369,7 +361,7 @@ void setup() {
     Serial.println("================================================");
     
     turnStatLEDOn();
-    LEDCSetup(senseLED);
+    //LEDCSetup(senseLED);
 }
 
 void loop() {
