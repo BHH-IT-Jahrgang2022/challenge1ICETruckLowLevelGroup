@@ -10,6 +10,9 @@
 // sensor libs
 #include "DHT.h"
 
+// servo libs
+#include <Servo.h>
+
 int dhtSense = 23;
 
 int statLED = 2;
@@ -22,10 +25,18 @@ PubSubClient pubSubClient;
 
 DataHelper datahelper;
 
+/*
+// change depending on sensor
 String clientid = "ESP32Sense1";
 String topicAlive = "/sensors/alive/ESP/";
 String topicData = "/sensors/data/ESP/";
 String topicControl = "/sensors/control/ESP/";
+*/
+
+String clientid = "ESP32Servo1";
+String topicAlive = "servos/ESP32Servo1/alive/";
+String topicData = "servos/ESP32Servo1/data/";
+String topicControl = "servos/ESP32Servo1/control/";
 
 const char* domain = "pi-johanna.local";
 const char* usernameMQTT = "low_level";
@@ -33,13 +44,60 @@ const char* passwordMQTT = "mqttguys";
 
 DHT dht(dhtSense, DHT22);
 
+Servo servoVent;
+int servoPin = 21;
+
+int oldPos = 15;
+
+bool isSensor = false; // change mode from sensor to motor
+
+void setServoPos(int position) {
+    if (position != oldPos) {
+        int degr = 0;
+        switch(position) {
+            case 0:
+                degr = 0;
+                break;
+            case 1:
+                degr = 10;
+                break;
+            case 2:
+                degr = 20;
+                break;
+            case 3:
+                degr = 30;
+                break;
+            case 4:
+                degr = 40;
+                break;
+            case 5:
+                degr = 50;
+                break;
+            case 6:
+                degr = 60;
+                break;
+            case 7:
+                degr = 70;
+                break;
+            case 8:
+                degr = 80;
+                break;
+            default:
+                degr = 180;
+                break;
+        }
+        servoVent.write(degr);
+        oldPos = position;
+    }
+}
+
 void callback(char* topic, byte *payload, unsigned int length) {
-    Serial.println("------------new message from broker----------");
-    Serial.print("channel: ");
-    Serial.println(topic);
-    Serial.print("data: ");
-    Serial.write(payload, length);
-    Serial.println();
+
+    // this all is pfusch ==> TODO: Make it properly!
+    payload[length] = 0;
+    int step = String((char *) payload).toInt();
+    Serial.println(step);
+    setServoPos(step);
 }
 
 void initMQTT() {
@@ -60,7 +118,7 @@ void initMQTT() {
             Serial.print("Failed, trying again! REASON: ");
             Serial.print(pubSubClient.state());
             Serial.println("");
-            delay(2000);
+            delay(10000);
         }
     }
 }
@@ -86,7 +144,7 @@ void initWiFi() {
 
     //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
   
-    WiFi.begin("TEST", "TETS");
+    WiFi.begin("Test", "TEST");
 
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -103,6 +161,11 @@ void initWiFi() {
 
 void initDHT() {
     dht.begin();
+}
+
+void initServo() {
+    servoVent.attach(servoPin);
+    servoVent.write(0); // home it
 }
 
 void turnStatLEDOn() {
@@ -123,6 +186,22 @@ void setPinStatus() {
     pinMode(dhtSense, INPUT);
 }
 
+void setPinStatusServo() {
+    Serial.println("Setting status LED...");
+    pinMode(statLED, OUTPUT);
+
+    Serial.println("Setting data LED...");
+    pinMode(sendLED, OUTPUT);
+
+    Serial.println("Setting sensor LED...");
+    pinMode(senseLED, OUTPUT);
+
+    Serial.println("Setting dht sensor pin...");
+    pinMode(dhtSense, INPUT);
+
+    pinMode(servoPin, OUTPUT);
+}
+
 float getTempReading() {
     float temp = dht.readTemperature();
     Serial.print("Temp: ");
@@ -140,6 +219,35 @@ void publishTempReading(float temp) {
     pubSubClient.publish(topicData.c_str(), tempString.c_str());
 }
 
+void initSensorPart() {
+    // Pin init
+    Serial.println("==== Initializing pins                      ====");
+
+    setPinStatus();
+
+    Serial.println("==== Initialized pins                       ====");
+
+    Serial.println("==== Initializing DHT Sensor                ====");
+
+    initDHT();
+
+    Serial.println("==== Initialized DHT Sensor                 ====");
+}
+
+void initServoPart() {
+    Serial.println("==== Initializing pins                      ====");
+
+    setPinStatusServo();
+
+    Serial.println("==== Initialized pins                       ====");
+
+    Serial.println("==== Initializing servo                     ====");
+
+    initServo();
+
+    Serial.println("==== Initialized servo                      ====");
+}
+
 void setup() {
     Serial.begin(115200);
     Serial.println("================================================");
@@ -147,13 +255,7 @@ void setup() {
     Serial.println("==== Compiled on 30/05/2023                 ====");
     Serial.println("==== Booting up                             ====");
 
-    // Pin init
-
-    Serial.println("==== Initializing pins                      ====");
-
-    setPinStatus();
-
-    Serial.println("==== Initialized pins                       ====");
+    
 
     // I2C Init
 /*
@@ -175,11 +277,11 @@ void setup() {
     
     Serial.println("==== Initialized I2C ====");
 */
-    Serial.println("==== Initializing DHT Sensor ====");
-
-    initDHT();
-
-    Serial.println("==== Initialized DHT Sensor ====");
+    if (isSensor) {
+        initSensorPart();
+    } else {
+        initServoPart();
+    }
 
     Serial.println("==== Initializing WiFi ====");
 
@@ -188,7 +290,7 @@ void setup() {
 
     Serial.println("==== Initialized WiFi ====");
 
-    Serial.println("Waiting 5 seconds for connections to clean up...");
+    Serial.println("Waiting 10 seconds for connections to clean up...");
 
     delay(10000);
 
@@ -214,6 +316,10 @@ void setup() {
 }
 
 void loop() {
-    publishTempReading(getTempReading());
-    delay(1000);
+    if (isSensor) {
+        publishTempReading(getTempReading());
+        delay(1000);
+    } else {
+        pubSubClient.loop();
+    }
 }
