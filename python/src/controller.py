@@ -26,14 +26,15 @@ class Controller:
         self.mqtt_running = False
         
     
-    def start_mqtt():    
+    def start_mqtt(self):    
         connected = False
         try:
             client = self.broker.connect_mqtt()
             self.broker.subscribe(client)
             connected = True
-        except(e):
+        except:
             connected = False
+            print("Couldn't conntect to MQTT")
 
         if connected:
             broker_thread = threading.Thread(target=client.loop_forever)
@@ -50,6 +51,7 @@ class Controller:
                 broker_thread._stop()
     
     def __init__(self, database_manager, broker):
+        print("I've been initialized")
         self.db_manager = database_manager
         self.broker = broker
         self.mqtt_running = False
