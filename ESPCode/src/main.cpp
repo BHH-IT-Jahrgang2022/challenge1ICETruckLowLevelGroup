@@ -33,10 +33,10 @@ String topicData = "/sensors/data/ESP/";
 String topicControl = "/sensors/control/ESP/";
 */
 
-String clientid = "ESP32Servo1";
-String topicAlive = "servos/ESP32Servo1/alive/";
-String topicData = "servos/ESP32Servo1/data/";
-String topicControl = "servos/ESP32Servo1/control/";
+String clientid = "ESP32Fan1";
+String topicAlive = "fans/ESP32Fan1/alive/";
+String topicData = "fans/ESP32Fan1/data/";
+String topicControl = "fans/ESP32Fan1/control/";
 
 const char* domain = "pi-johanna.local";
 const char* usernameMQTT = "low_level";
@@ -54,9 +54,43 @@ DHT dht(dhtSense, DHT22);
 Servo servoVent;
 int servoPin = 21;
 
+int fanPin = 19;
+
 int oldPos = 15;
 
 bool isSensor = false; // change mode from sensor to motor
+bool isServo = false;
+bool isFan = true; // change to fan mode
+
+void setLEDC(int brightness) {
+    if (brightness >= 0 && brightness <= 255) {
+        ledcWrite(ledChannel, brightness);
+    }
+    else if (brightness > 255) {
+        ledcWrite(ledChannel, 255);
+    }
+    else if (brightness < 0) {
+        ledcWrite(ledChannel, 0);
+    }
+    else {
+        Serial.print("ERROR: LEDC brightness is not an int");
+    }
+}
+
+void setFanC(int speed) {
+    if (speed >= 0 && speed <= 255) {
+        ledcWrite(ledChannel, speed);
+    }
+    else if (speed > 255) {
+        ledcWrite(ledChannel, 255);
+    }
+    else if (speed < 0) {
+        ledcWrite(ledChannel, 0);
+    }
+    else {
+        Serial.print("ERROR: LEDC brightness is not an int");
+    }
+}
 
 void setServoPos(int position) {
     if (position != oldPos) {
@@ -98,13 +132,38 @@ void setServoPos(int position) {
     }
 }
 
+
 void callback(char* topic, byte *payload, unsigned int length) {
 
     // this all is pfusch ==> TODO: Make it properly!
     payload[length] = 0;
     int step = String((char *) payload).toInt();
+    Serial.print("topic: ");
+    Serial.println(topic);
+    Serial.print("data: ");
+    Serial.write(payload, length);
+    Serial.println();
+}
+
+
+void callbackServo(char* topic, byte *payload, unsigned int length) {
+
+    // this all is pfusch ==> TODO: Make it properly!
+    payload[length] = 0;
+    int step = String((char *) payload).toInt();
+
     Serial.println(step);
     setServoPos(step);
+}
+
+void callbackFan(char* topic, byte *payload, unsigned int length) {
+
+    // this all is pfusch ==> TODO: Make it properly!
+    payload[length] = 0;
+    int speed = String((char *) payload).toInt();
+
+    Serial.println(speed);
+    setFanC(speed);
 }
 
 void initMQTT() {
@@ -112,7 +171,17 @@ void initMQTT() {
     pubSubClient = PubSubClient(wifiClient);
 
     pubSubClient.setServer(domain, 1883);
-    pubSubClient.setCallback(callback);
+    /*
+    if (isServo) {
+        pubSubClient.setCallback(callbackServo);
+    } else if (isFan) {
+        pubSubClient.setCallback(callbackFan);
+    } else {
+        pubSubClient.setCallback(callback);
+    }
+    */
+
+   pubSubClient.setCallback(callbackFan);  // insert callback function according to ESP type
 
     while(!pubSubClient.connected()) {
         Serial.println("Attempting connection...");
@@ -151,7 +220,7 @@ void initWiFi() {
 
     //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
   
-    WiFi.begin("Test", "Test");
+    WiFi.begin("BembelNet", "Go2TheBembelWifiNetwork2023!");
 
     while(WiFi.status() != WL_CONNECTED) {
         delay(1000);
@@ -214,19 +283,9 @@ void LEDCSetup(int ledPin) {
     ledcAttachPin(ledPin, ledChannel);
 }
 
-void setLEDC(int brightness) {
-    if (brightness >= 0 && brightness <= 255) {
-        ledcWrite(ledChannel, brightness);
-    }
-    else if (brightness > 255) {
-        ledcWrite(ledChannel, 255);
-    }
-    else if (brightness < 0) {
-        ledcWrite(ledChannel, 0);
-    }
-    else {
-        Serial.print("ERROR: LEDC brightness is not an int");
-    }
+void fanCSetup(int fanPin) {
+    ledcSetup(ledChannel, freq, resolution);
+    ledcAttachPin(fanPin, ledChannel);
 }
 
 int tempBrightness(float temp) {
@@ -296,6 +355,16 @@ void initServoPart() {
     Serial.println("==== Initialized servo                      ====");
 }
 
+void initFanPart() {
+    Serial.println("==== Initializing pins                      ====");
+
+    fanCSetup(fanPin);
+
+    Serial.println("==== Initialized pins                       ====");
+
+    setFanC(0);
+}
+
 void setup() {
     
     Serial.begin(115200);
@@ -328,8 +397,15 @@ void setup() {
 
     if (isSensor) {
         initSensorPart();
-    } else {
+    } else if (isFan) {
+        initFanPart();
+    } else if (isServo) {
         initServoPart();
+    } else {
+        Serial.println("!!#!!     no ESP type given    !!#!!");
+        while(true) {
+
+        }
     }
 
     Serial.println("==== Initializing WiFi ====");
