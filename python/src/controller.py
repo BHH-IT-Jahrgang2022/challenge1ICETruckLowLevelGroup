@@ -1,6 +1,6 @@
 import time
-#from thermoController.models import *
-#import mqttbroker as mqtt
+import mqttbroker as mqtt
+import databasemanager as dbm
 import threading
           
 class Controller:
@@ -29,7 +29,7 @@ class Controller:
     def start_mqtt(self):    
         connected = False
         try:
-            client = self.broker.connect_mqtt()
+            client = self.mqtt_broker.connect_mqtt()
             self.broker.subscribe(client)
             connected = True
         except Exception as e:
@@ -50,8 +50,8 @@ class Controller:
             else:
                 broker_thread._stop()
     
-    def __init__(self, database_manager, broker):
+    def __init__(self):
         print("I've been initialized")
-        self.db_manager = database_manager
-        self.broker = broker
+        self.db_manager = dbm.DatabaseManager()
+        self.mqtt_broker = mqtt.Broker()
         self.mqtt_running = False
