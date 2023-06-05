@@ -5,7 +5,6 @@ import django.views.generic as dv
 def test(request):
     return HttpResponse("I live")
 
-
 #ToDo: Abfrage aller Daten
 #ToDo: Abfrage in einem Zeitintervall
 #ToDo: Abfrage zu einem Sensor

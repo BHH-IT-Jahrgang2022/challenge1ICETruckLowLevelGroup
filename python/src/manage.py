@@ -2,11 +2,15 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+import thermoController.databasemanager as dbm
+import thermoController.controller as con
+import thermoController.mqttbroker as mqtt
 
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'thermoAPI.settings')
+    #settings.configure()
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'api.settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -17,6 +21,10 @@ def main():
         ) from exc
     execute_from_command_line(sys.argv)
 
+def start_controller():
+    controller = con.Controller(dbm.DatabaseManager(), mqtt.Broker())
+    controller.start_mqtt()
 
 if __name__ == '__main__':
+    start_controller()
     main()

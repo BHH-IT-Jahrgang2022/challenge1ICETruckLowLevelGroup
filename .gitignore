@@ -1,3 +1,5 @@
 .pio
 
-/python/.venv
+venv
+.venv
+__pycache__
