@@ -61,7 +61,7 @@ class Broker:
             if msg_count > 5:
                 break
 
-    def subscribe(self, client: mqtt_client):
+    def subscribe(self, topic, client: mqtt_client):
         def on_message(client, userdata, msg):
             print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
             self.queue.append(msg.payload.decode())

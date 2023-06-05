@@ -30,7 +30,9 @@ class Controller:
         connected = False
         try:
             client = self.mqtt_broker.connect_mqtt()
-            self.broker.subscribe(client)
+
+            topic = "topic_name or something"
+            self.mqtt_broker.subscribe(topic, client)
             connected = True
         except Exception as e:
             connected = False
@@ -44,8 +46,8 @@ class Controller:
             self.mqtt_running = True
             print("I work")
             while self.mqtt_running:
-                if broker.queue:
-                    payload = broker.queue.pop(0)
+                if self.mqtt_broker.queue:
+                    payload = self.mqtt_broker.queue.pop(0)
                     print(payload)
             else:
                 broker_thread._stop()
