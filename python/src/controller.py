@@ -1,5 +1,5 @@
 import time
-#from thermo.models import *
+#from thermoController.models import *
 #import mqttbroker as mqtt
 import threading
           
@@ -32,9 +32,9 @@ class Controller:
             client = self.broker.connect_mqtt()
             self.broker.subscribe(client)
             connected = True
-        except:
+        except Exception as e:
             connected = False
-            print("Couldn't conntect to MQTT")
+            print(e)
 
         if connected:
             broker_thread = threading.Thread(target=client.loop_forever)

@@ -1,2 +1,2 @@
-django==4.2.1
+flask
 paho-mqtt==1.6.1

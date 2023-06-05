@@ -13,7 +13,7 @@ class Broker:
     MAX_RECONNECT_COUNT = 12
     MAX_RECONNECT_DELAY = 60
 
-    def connect_mqtt():
+    def connect_mqtt(self):
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
                 print("Connected to MQTT Broker!")
@@ -26,7 +26,7 @@ class Broker:
         client.connect(broker, port)
         return client
 
-    def on_disconnect(client, userdata, rc):
+    def on_disconnect(self, client, userdata, rc):
         logging.info("Disconnected with result code: %s", rc)
         reconnect_count, reconnect_delay = 0, FIRST_RECONNECT_DELAY
         while reconnect_count < MAX_RECONNECT_COUNT:
@@ -45,7 +45,7 @@ class Broker:
             reconnect_count += 1
         logging.info("Reconnect failed after %s attempts. Exiting...", reconnect_count)
 
-    def publish(client):
+    def publish(self, client):
         msg_count = 1
         while True:
             time.sleep(1)
@@ -61,7 +61,7 @@ class Broker:
             if msg_count > 5:
                 break
 
-    def subscribe(client: mqtt_client):
+    def subscribe(self, client: mqtt_client):
         def on_message(client, userdata, msg):
             print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
             self.queue.append(msg.payload.decode())
