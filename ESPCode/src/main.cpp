@@ -33,10 +33,18 @@ String topicData = "/sensors/data/ESP/";
 String topicControl = "/sensors/control/ESP/";
 */
 
+/*
 String clientid = "ESP32Fan1";
 String topicAlive = "fans/ESP32Fan1/alive/";
 String topicData = "fans/ESP32Fan1/data/";
 String topicControl = "fans/ESP32Fan1/control/";
+*/
+
+String clientid = "ESP32Motors1";
+String topicAlive = "motors/ESP32Motors1/alive/";
+String topicData = "motors/ESP32Motors1/data/";
+String topicFanControl = "motors/ESP32Motors1/fan/control/";
+String topicServoControl = "motors/ESP32Motors1/servo/control/";
 
 const char* domain = "pi-johanna.local";
 const char* usernameMQTT = "low_level";
@@ -60,7 +68,8 @@ int oldPos = 15;
 
 bool isSensor = false; // change mode from sensor to motor
 bool isServo = false;
-bool isFan = true; // change to fan mode
+bool isFan = false; // change to fan mode
+bool isCombi = true; //set to combi-mode: one ESP, servo and fan
 
 void setLEDC(int brightness) {
     if (brightness >= 0 && brightness <= 255) {
@@ -132,6 +141,21 @@ void setServoPos(int position) {
     }
 }
 
+void callbackCombi(char* topic, byte *payload, unsigned int length) {
+    payload[length] = 0;
+    int value = String((char *) payload).toInt();
+    if (strcmp(topic, topicFanControl.c_str())) {
+        Serial.print(topic);
+        Serial.println(value);
+        setFanC(value);
+    } else if (strcmp(topic, topicServoControl.c_str())) {
+        Serial.print(topic);
+        Serial.println(value);
+        setServoPos(value);
+    } else {
+        Serial.println("ERROR: problem in combiCallback");
+    }
+}
 
 void callback(char* topic, byte *payload, unsigned int length) {
 
@@ -144,7 +168,6 @@ void callback(char* topic, byte *payload, unsigned int length) {
     Serial.write(payload, length);
     Serial.println();
 }
-
 
 void callbackServo(char* topic, byte *payload, unsigned int length) {
 
@@ -181,7 +204,7 @@ void initMQTT() {
     }
     */
 
-   pubSubClient.setCallback(callbackFan);  // insert callback function according to ESP type
+   pubSubClient.setCallback(callbackCombi);  // insert callback function according to ESP type
 
     while(!pubSubClient.connected()) {
         Serial.println("Attempting connection...");
@@ -189,7 +212,8 @@ void initMQTT() {
         if (pubSubClient.connect(clientid.c_str(), usernameMQTT, passwordMQTT)) {
             Serial.println("MQTT connected");
             pubSubClient.publish(topicAlive.c_str(), "connect");
-            pubSubClient.subscribe(topicControl.c_str());
+            pubSubClient.subscribe(topicFanControl.c_str());  // adjust control topic/s here (for now)
+            pubSubClient.subscribe(topicServoControl.c_str());
         } else {
             Serial.print("Failed, trying again! REASON: ");
             Serial.print(pubSubClient.state());
@@ -365,6 +389,11 @@ void initFanPart() {
     setFanC(0);
 }
 
+void initCombi() {
+    initServoPart();
+    initFanPart();
+}
+
 void setup() {
     
     Serial.begin(115200);
@@ -401,6 +430,8 @@ void setup() {
         initFanPart();
     } else if (isServo) {
         initServoPart();
+    } else if (isCombi) {
+        initCombi();
     } else {
         Serial.println("!!#!!     no ESP type given    !!#!!");
         while(true) {
