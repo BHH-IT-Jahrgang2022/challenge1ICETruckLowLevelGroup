@@ -2,9 +2,9 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-import thermo.databasemanager as dbm
-import thermo.controller as con
-import thermo.mqttbroker as mqtt
+import thermoController.databasemanager as dbm
+import thermoController.controller as con
+import thermoController.mqttbroker as mqtt
 
 
 def main():

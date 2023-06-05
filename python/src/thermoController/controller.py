@@ -1,6 +1,6 @@
 import time
-from thermo.models import *
-import mqttbroker as mqtt
+#from thermo.models import *
+#import mqttbroker as mqtt
 import threading
           
 class Controller:
