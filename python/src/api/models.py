@@ -1,6 +1,6 @@
 from django.db import models
 
-# Create your models here.
+# toDo: Deprecated, replace with Flask
 class Temperature(models.Model):
     timestamp = models.TimeField(auto_now=True)
     temperature = models.FloatField()

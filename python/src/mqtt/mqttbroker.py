@@ -60,8 +60,35 @@ class Broker:
             msg_count += 1
             if msg_count > 5:
                 break
+    
+    def stop_mqtt():
+        self.mqtt_running = False
 
-    def subscribe(self, client: mqtt_client):
+    def start_mqtt(self):    
+        connected = False
+        try:
+            client = self.broker.connect_mqtt()
+            self.broker.subscribe(client)
+            connected = True
+        except Exception as e:
+            connected = False
+            print(e)
+
+        if connected:
+            broker_thread = threading.Thread(target=client.loop_forever)
+
+            broker_thread.start()
+
+            self.mqtt_running = True
+            print("I work")
+            while self.mqtt_running:
+                if broker.queue:
+                    payload = broker.queue.pop(0)
+                    print(payload)
+            else:
+                broker_thread._stop()
+
+    def subscribe(self, topic, client: mqtt_client):
         def on_message(client, userdata, msg):
             print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
             self.queue.append(msg.payload.decode())
