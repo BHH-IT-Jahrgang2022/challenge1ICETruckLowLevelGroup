@@ -20,10 +20,10 @@ class Broker:
             else:
                 print("Failed to connect, return code %d\n", rc)
         # Set Connecting Client ID
-        client = mqtt_client.Client(client_id)
-        client.username_pw_set(username, password)
+        client = mqtt_client.Client(self.client_id)
+        client.username_pw_set(self.username, self.password)
         client.on_connect = on_connect
-        client.connect(broker, port)
+        client.connect(self.broker, self.port)
         return client
 
     def on_disconnect(self, client, userdata, rc):
@@ -60,33 +60,6 @@ class Broker:
             msg_count += 1
             if msg_count > 5:
                 break
-    
-    def stop_mqtt():
-        self.mqtt_running = False
-
-    def start_mqtt(self):    
-        connected = False
-        try:
-            client = self.broker.connect_mqtt()
-            self.broker.subscribe(client)
-            connected = True
-        except Exception as e:
-            connected = False
-            print(e)
-
-        if connected:
-            broker_thread = threading.Thread(target=client.loop_forever)
-
-            broker_thread.start()
-
-            self.mqtt_running = True
-            print("I work")
-            while self.mqtt_running:
-                if broker.queue:
-                    payload = broker.queue.pop(0)
-                    print(payload)
-            else:
-                broker_thread._stop()
 
     def subscribe(self, topic, client: mqtt_client):
         def on_message(client, userdata, msg):
