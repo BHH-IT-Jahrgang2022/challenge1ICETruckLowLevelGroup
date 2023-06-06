@@ -5,7 +5,7 @@
 #include <WiFiClient.h>
 
 //#include "mqttHandler.h"
-#include "datahelper.h"
+//#include "datahelper.h"
 
 // sensor libs
 #include "DHT.h"
@@ -23,7 +23,7 @@ int senseLED = 15;
 WiFiClient wifiClient;
 PubSubClient pubSubClient;
 
-DataHelper datahelper;
+//DataHelper datahelper;
 
 /*
 // change depending on sensor
@@ -143,13 +143,16 @@ void setServoPos(int position) {
 
 void callbackCombi(char* topic, byte *payload, unsigned int length) {
     payload[length] = 0;
+    String topicString = topic;
     int value = String((char *) payload).toInt();
-    if (strcmp(topic, topicFanControl.c_str())) {
+    if (topicString.equals(topicFanControl)) {
+        Serial.println("HUHU");
         Serial.print(topic);
         Serial.println(value);
         setFanC(value);
-    } else if (strcmp(topic, topicServoControl.c_str())) {
+    } else if (topicString.equals(topicServoControl)) {
         Serial.print(topic);
+        Serial.println("I AM HERE!");
         Serial.println(value);
         setServoPos(value);
     } else {
@@ -226,20 +229,20 @@ void initMQTT() {
 void initWiFi() {
     Serial.println("Initializing SPFISS...");
 
-    datahelper = DataHelper();
+    //datahelper = DataHelper();
 
     Serial.println("Connecting to WiFi...");
 
     Serial.println("Loading credentials...");
 
-    std::array<std::string, 2> credentials = datahelper.getWiFiCredentials();
+    //std::array<std::string, 2> credentials = datahelper.getWiFiCredentials();
 
     Serial.println("Connecting");
     // TODO: Debug Wifi shit
 
     Serial.println("*#*#*");
-    Serial.println(datahelper.getWiFiSSID().c_str());
-    Serial.println(datahelper.getWiFiPASSWD().c_str());
+    //Serial.println(datahelper.getWiFiSSID().c_str());
+    //Serial.println(datahelper.getWiFiPASSWD().c_str());
     Serial.println("*#*#*");
 
     //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
