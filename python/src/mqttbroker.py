@@ -1,13 +1,6 @@
 from paho.mqtt import client as mqtt_client
 
 class Broker:
-    broker = 'pi-johanna.local'
-    port = 1883
-    topic = "python/mqtt"
-    client_id = f'pi0'
-    username = 'low_level'
-    password = 'mqttguys'
-    
     FIRST_RECONNECT_DELAY = 1
     RECONNECT_RATE = 2
     MAX_RECONNECT_COUNT = 12
@@ -20,11 +13,48 @@ class Broker:
             else:
                 print("Failed to connect, return code %d\n", rc)
         # Set Connecting Client ID
+        broker = 'pi-johanna.local'
+        port = 1883
+        topic = "python/mqtt"
+        client_id = f'pi0'
+        username = 'low_level'
+        password = 'mqttguys'
+    
         client = mqtt_client.Client(client_id)
         client.username_pw_set(username, password)
         client.on_connect = on_connect
         client.connect(broker, port)
         return client
+    
+    def stop_mqtt(self):
+        self.mqtt_running = False
+        
+    # ToDo: fix this method
+    def start_mqtt(self):    
+        connected = False
+        try:
+            client = self.mqtt_broker.connect_mqtt()
+
+            topic = "topic_name or something"
+            self.mqtt_broker.subscribe(topic, client)
+            connected = True
+        except Exception as e:
+            connected = False
+            print(e)
+
+        if connected:
+            broker_thread = threading.Thread(target=client.loop_forever)
+
+            broker_thread.start()
+
+            self.mqtt_running = True
+            print("I work")
+            while self.mqtt_running:
+                if self.mqtt_broker.queue:
+                    payload = self.mqtt_broker.queue.pop(0)
+                    print(payload)
+            else:
+                broker_thread._stop()
 
     def on_disconnect(self, client, userdata, rc):
         logging.info("Disconnected with result code: %s", rc)
@@ -61,7 +91,7 @@ class Broker:
             if msg_count > 5:
                 break
 
-    def subscribe(self, client: mqtt_client):
+    def subscribe(self, topic, client: mqtt_client):
         def on_message(client, userdata, msg):
             print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
             self.queue.append(msg.payload.decode())
