@@ -13,6 +13,30 @@ class Broker:
     MAX_RECONNECT_COUNT = 12
     MAX_RECONNECT_DELAY = 60
 
+    def start_mqtt(self):    
+        connected = False
+        try:
+            client = self.broker.connect_mqtt()
+            self.broker.subscribe("sensors/ESP32Sense1/data/", client)
+            connected = True
+        except Exception as e:
+            connected = False
+            print(e)
+
+        if connected:
+            broker_thread = threading.Thread(target=client.loop_forever)
+
+            broker_thread.start()
+
+            self.mqtt_running = True
+            print("I work")
+            while self.mqtt_running:
+                if self.broker.queue:
+                    payload = self.broker.queue.pop(0)
+                    print(payload)
+            broker_thread._stop()
+            broker_thread._delete()
+
     def connect_mqtt(self):
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
@@ -71,3 +95,4 @@ class Broker:
     
     def __init__(self):
         self.queue = []
+        self.running = False
