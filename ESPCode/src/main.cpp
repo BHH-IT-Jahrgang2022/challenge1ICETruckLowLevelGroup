@@ -54,13 +54,15 @@ const int freq = 5000;
 const int ledChannel = 0;
 const int resolution = 8;
 
+const int fanChannel = 1;
+
 const float targetTemp = -18.0;
 const float maxDiff = 13.0;
 
 DHT dht(dhtSense, DHT22);
 
 Servo servoVent;
-int servoPin = 21;
+int servoPin = 32;  // 21
 
 int fanPin = 19;
 
@@ -88,13 +90,14 @@ void setLEDC(int brightness) {
 
 void setFanC(int speed) {
     if (speed >= 0 && speed <= 255) {
-        ledcWrite(ledChannel, speed);
+        Serial.println("LALALA");
+        ledcWrite(fanChannel, speed);
     }
     else if (speed > 255) {
-        ledcWrite(ledChannel, 255);
+        ledcWrite(fanChannel, 255);
     }
     else if (speed < 0) {
-        ledcWrite(ledChannel, 0);
+        ledcWrite(fanChannel, 0);
     }
     else {
         Serial.print("ERROR: LEDC brightness is not an int");
@@ -103,6 +106,7 @@ void setFanC(int speed) {
 
 void setServoPos(int position) {
     if (position != oldPos) {
+        Serial.println("HIHIHI");
         int degr = 0;
         switch(position) {
             case 0:
@@ -311,8 +315,8 @@ void LEDCSetup(int ledPin) {
 }
 
 void fanCSetup(int fanPin) {
-    ledcSetup(ledChannel, freq, resolution);
-    ledcAttachPin(fanPin, ledChannel);
+    ledcSetup(fanChannel, freq, resolution);
+    ledcAttachPin(fanPin, fanChannel);
 }
 
 int tempBrightness(float temp) {
@@ -445,7 +449,7 @@ void setup() {
     Serial.println("==== Initializing WiFi ====");
 
     // Init WiFi
-    initWiFi();
+    //initWiFi();
 
     Serial.println("==== Initialized WiFi ====");
 
@@ -457,7 +461,7 @@ void setup() {
 
     Serial.println("==== Initializing MQTT                      ====");
         
-    initMQTT();
+    //initMQTT();
 
     Serial.println("==== Initialized MQTT                       ====");
 
@@ -480,7 +484,7 @@ void loop() {
         publishTempReading(getTempReading());
         delay(1000);
     } else {
-        pubSubClient.loop();
+        //pubSubClient.loop();
     }
 /*
     for (int i = 0; i <= 255; i++) {
@@ -497,4 +501,38 @@ void loop() {
     publishTempReading(getTempReading());
     delay(1000);
 */
+    /*setFanC(0);
+    setServoPos(0);
+    Serial.println();
+    Serial.println("+++   +++   Motors set to 0   +++   +++");
+    delay(1000);
+    setServoPos(2);
+    Serial.println("+++   +++   Servo set to position 2   +++   +++");
+    delay(1000);
+    setFanC(160);
+    Serial.println("+++   +++   Fan set to 160   +++   +++");
+    delay(1000);
+    setServoPos(6);
+    Serial.println("+++   +++   Servo set to position 6   +++   +++");
+    delay(1000);
+    setFanC(255);
+    Serial.println("+++   +++   Fan set to 255   +++   +++");
+    delay(1000);
+    setServoPos(0);
+    Serial.println("+++   +++   Servo set to position 0   +++   +++");
+    delay(1000);
+    setFanC(100);
+    Serial.println("+++   +++   Fan set to 100   +++   +++");
+    delay(1000);
+    setServoPos(8);
+    Serial.println("+++   +++   Servo set to position 8   +++   +++");
+    delay(1000);
+    setFanC(0);
+    Serial.println("+++   +++   Fan set to 0   +++   +++");
+    delay(1000);
+    */
+   setServoPos(2);
+   delay(1000);
+   setServoPos(8);
+   delay(1000);
 }
