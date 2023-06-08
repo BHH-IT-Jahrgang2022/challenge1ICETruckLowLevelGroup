@@ -2,9 +2,6 @@ import mqttbroker as mqtt
 import threading
 
 class MQTTController:
-    def handle_message(self):
-        print(self.broker.queue.pop())
-    
     def stop_listening(self):
         self.listening = False
     
@@ -12,10 +9,11 @@ class MQTTController:
         def listen(self):
             while self.listening:
                 if self.broker.queue:
-                    self.handle_message()
+                    print(self.broker.queue.pop())
         if not self.listening:
             self.listening = True
             listener_thread = threading.Thread(target=listen)
+            listener_thread.start()
     
     def start(self):
         self.running = True
@@ -23,17 +21,18 @@ class MQTTController:
     
     def loop(self):
         while self.running:
-            input = input("Commands: stop, connect, subscribe [topic], unsubscribe [topic]")
-            if input == "stop":
-                if self.broker.is_running():
+            input1 = ""
+            input1 = input("Commands: stop, connect, subscribe [topic], unsubscribe [topic]")
+            if input1 == "stop":
+                if self.broker.is_connected():
                     message = "disconnected successfully"
                     try:
                         self.stop()
                     except Exception as e:
                         message = "Error on disconnect: " + str(e)
                     print(message)
-            elif input == "connect":
-                if self.broker.is_running():
+            elif input1 == "connect":
+                if self.broker.is_connected():
                     print("MQTT-Broker is already running!")
                 else:
                     message = "connected successfully"
@@ -42,14 +41,14 @@ class MQTTController:
                     except Exception as e:
                         message = "Error on connect: " + str(e)
                     print(message)
-            if input.__len__() > 10:
-                if input[:9] == "subscribe":
-                    if input[10] == "":
-                        topic = input[:11]
-                        if self.broker.is_running():
+            if input1.__len__() > 10:
+                if input1[:8] == "subscribe":
+                    if input1[9] == "":
+                        topic = input1[:10]
+                        if self.broker.is_connected():
                             message = "connected successfully"
                             try:
-                                target=self.broker.subscribe(topic)
+                                self.broker.subscribe(topic)
                                 self.subscribed_topics.append(topic)
                             except Exception as e:
                                 message = "Error on connect: " + str(e)
@@ -58,12 +57,12 @@ class MQTTController:
                             print("Not connected to MQTT-Broker")
                     else:
                         print("Invalid command format")
-            elif input.__len__() > 12:
-                if input[:11] == "unsubscribe":
+            elif input1.__len__() > 12:
+                if input1[:11] == "unsubscribe":
                     message = "unsubscribed successfully"
-                    if input[12] == "":
-                        topic = input[:13]
-                        if self.broker.is_running():
+                    if input1[12] == "":
+                        topic = input1[:13]
+                        if self.broker.is_connected():
                             if topic in self.subscribed_topics:
                                 try:
                                     self.broker.unsubscribe(topic)
@@ -84,10 +83,10 @@ class MQTTController:
     
     def stop(self):
         self.running = False
-        self.broker.stop()
+        self.broker.disconnect()
     
     def __init__(self):
-        self.broker = mqtt.Broker()
+        self.broker = mqtt.Broker("pi-johanna.local",f"pi0")
         self.running = False
         self.listening = False
         self.subscribed_topics = []

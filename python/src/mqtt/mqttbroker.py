@@ -1,18 +1,17 @@
 from paho.mqtt import client as mqtt_client
 import threading
+import time
 
 class Broker:
     def connect_mqtt(self):
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
                 print("Connected to MQTT Broker!")
-            else:
-                print("Failed to connect, return code %d\n", rc)
         # Set Connecting Client ID
-        self.client = mqtt_client.Client(client_id)
-        self.client.username_pw_set(username, password)
+        self.client = mqtt_client.Client(self.client_id)
+        self.client.username_pw_set(self.username, self.password)
         self.client.on_connect = on_connect
-        self.client.connect(broker, port)
+        self.client.connect(self.broker, self.port)
 
     def on_disconnect(self, client, userdata, rc):
         FIRST_RECONNECT_DELAY = 1
@@ -55,12 +54,12 @@ class Broker:
 
     def connect(self):    
         try:
-            self.client = self.broker.connect_mqtt()
+            self.connect_mqtt()
             self.connected = True
         except Exception as e:
             self.connected = False
             print(e)
-
+        
         if self.connected:
             broker_thread = threading.Thread(target=self.client.loop_forever)
             broker_thread.start()
@@ -77,14 +76,15 @@ class Broker:
         if self.connected:
             def on_message(client, userdata, msg):
                 self.queue.append(msg.payload.decode())
+                print(msg.payload.decode())
             self.client.subscribe(topic)
             self.client.on_message = on_message
     
     def __init__(self, broker, client_id, port=1883, username="", password=""):
         self.broker = 'pi-johanna.local'
         self.client_id = f'pi0'
-        self.port = 1883
-        self.username = 'low_level'
+        self.port = port
+        self.username = "low_level"
         self.password = 'mqttguys'
         
         self.connected = False
