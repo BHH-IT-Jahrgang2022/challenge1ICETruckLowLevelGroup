@@ -2,6 +2,8 @@ from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 import sqlite3
 import json
+import jsonify
+from dataclasses import dataclass
 
 # create the extension
 db = SQLAlchemy()
@@ -13,13 +15,14 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////home//void/test.db"
 db.init_app(app)
 
 # Create database with its table and columns
+@dataclass
 class Temperature(db.Model):
 
     __tablename__ = "data"
 
-    zeitpunkt = db.Column(db.INTEGER , primary_key=True)
-    sensor = db.Column(db.VARCHAR(20))  
-    temperatur = db.Column(db.FLOAT)
+    zeitpunkt:int = db.Column(db.INTEGER , primary_key=True)
+    sensor:str = db.Column(db.VARCHAR(20))  
+    temperatur:float = db.Column(db.FLOAT)
 
     def __init__(self, zeitpunkt, sensor, temperatur):
         self.zeitpunkt = zeitpunkt
@@ -57,3 +60,8 @@ def handle_json():
 
     finally:
         return return_message, return_code   
+
+@app.route("/get_json", methods=['GET'])
+def get_json():
+    all_posts = Temperature.query.all()
+    return jsonify(all_posts)
