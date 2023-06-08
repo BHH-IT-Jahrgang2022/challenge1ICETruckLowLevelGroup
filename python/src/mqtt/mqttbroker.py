@@ -1,42 +1,7 @@
 from paho.mqtt import client as mqtt_client
+import threading
 
 class Broker:
-    broker = 'pi-johanna.local'
-    port = 1883
-    topic = "python/mqtt"
-    client_id = f'pi0'
-    username = 'low_level'
-    password = 'mqttguys'
-    
-    FIRST_RECONNECT_DELAY = 1
-    RECONNECT_RATE = 2
-    MAX_RECONNECT_COUNT = 12
-    MAX_RECONNECT_DELAY = 60
-
-    def start_mqtt(self):    
-        connected = False
-        try:
-            client = self.broker.connect_mqtt()
-            self.broker.subscribe("sensors/ESP32Sense1/data/", client)
-            connected = True
-        except Exception as e:
-            connected = False
-            print(e)
-
-        if connected:
-            broker_thread = threading.Thread(target=client.loop_forever)
-
-            broker_thread.start()
-
-            self.mqtt_running = True
-            print("I work")
-            while self.mqtt_running:
-                if self.broker.queue:
-                    payload = self.broker.queue.pop(0)
-                    print(payload)
-            broker_thread._stop()
-            broker_thread._delete()
-
     def connect_mqtt(self):
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
@@ -44,13 +9,18 @@ class Broker:
             else:
                 print("Failed to connect, return code %d\n", rc)
         # Set Connecting Client ID
-        client = mqtt_client.Client(self.client_id)
-        client.username_pw_set(self.username, self.password)
-        client.on_connect = on_connect
-        client.connect(self.broker, self.port)
-        return client
+        self.client = mqtt_client.Client(client_id)
+        self.client.username_pw_set(username, password)
+        self.client.on_connect = on_connect
+        self.client.connect(broker, port)
 
     def on_disconnect(self, client, userdata, rc):
+        FIRST_RECONNECT_DELAY = 1
+        RECONNECT_RATE = 2
+        MAX_RECONNECT_COUNT = 12
+        MAX_RECONNECT_DELAY = 60
+        self.connected = False
+        
         logging.info("Disconnected with result code: %s", rc)
         reconnect_count, reconnect_delay = 0, FIRST_RECONNECT_DELAY
         while reconnect_count < MAX_RECONNECT_COUNT:
@@ -58,7 +28,7 @@ class Broker:
             time.sleep(reconnect_delay)
 
             try:
-                client.reconnect()
+                self.client.reconnect()
                 logging.info("Reconnected successfully!")
                 return
             except Exception as err:
@@ -69,30 +39,54 @@ class Broker:
             reconnect_count += 1
         logging.info("Reconnect failed after %s attempts. Exiting...", reconnect_count)
 
-    def publish(self, client):
-        msg_count = 1
-        while True:
+    def publish(self, topic, message):
+        for attempt in range(0, 5):
             time.sleep(1)
-            msg = f"messages: {msg_count}"
-            result = client.publish(topic, msg)
-            # result: [0, 1]
+            result = self.client.publish(topic, message)
             status = result[0]
             if status == 0:
-                print(f"Send `{msg}` to topic `{topic}`")
+                print(f"Send `{message}` to topic `{topic}` on attempt {attempt}")
+                break
             else:
                 print(f"Failed to send message to topic {topic}")
-            msg_count += 1
-            if msg_count > 5:
-                break
+        
+    def is_connected(self):
+        return self.connected
 
-    def subscribe(self, topic, client: mqtt_client):
-        def on_message(client, userdata, msg):
-            print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
-            self.queue.append(msg.payload.decode())
+    def connect(self):    
+        try:
+            self.client = self.broker.connect_mqtt()
+            self.connected = True
+        except Exception as e:
+            self.connected = False
+            print(e)
 
-        client.subscribe(topic)
-        client.on_message = on_message
+        if self.connected:
+            broker_thread = threading.Thread(target=self.client.loop_forever)
+            broker_thread.start()
     
-    def __init__(self):
+    def disconnect(self):
+        if self.connected:
+            try:
+                self.client.disconnect()
+                self.connected = False
+            except Exception as e:
+                print("fatal error on disconnect: {e}")
+
+    def subscribe(self, topic):
+        if self.connected:
+            def on_message(client, userdata, msg):
+                self.queue.append(msg.payload.decode())
+            self.client.subscribe(topic)
+            self.client.on_message = on_message
+    
+    def __init__(self, broker, client_id, port=1883, username="", password=""):
+        self.broker = 'pi-johanna.local'
+        self.client_id = f'pi0'
+        self.port = 1883
+        self.username = 'low_level'
+        self.password = 'mqttguys'
+        
+        self.connected = False
         self.queue = []
-        self.running = False
+        self.client = None
