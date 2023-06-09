@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="IceTruckControl.MainPage">
+             x:Class="IceTruckControl.MainPage"
+             BackgroundColor="AliceBlue">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -10,12 +11,14 @@
                 <Setter Property="VerticalOptions" Value="Center" />
                 <Setter Property="HorizontalOptions" Value="Center" />
                 <Setter Property="HorizontalTextAlignment" Value="Center" />
+                <Setter Property="TextColor" Value="Black" />
             </Style>
 
             <Style x:Name="frameStd" TargetType="Frame">
                 <Setter Property="Margin" Value="10" />
                 <Setter Property="BackgroundColor" Value="LightGray"/>
                 <Setter Property="CornerRadius" Value="25" />
+                <Setter Property="BorderColor" Value="Transparent"/>
             </Style>
 
             <Style x:Name="incBtn" TargetType="Button">
@@ -34,13 +37,17 @@
             <Frame Style="{StaticResource frameStd}">
                 <Grid RowDefinitions="*,*" ColumnDefinitions="*, 1, *" HeightRequest="150">
                     <!-- Temp medium -->
-                    <Label Grid.RowSpan="2" 
-                           Text="29°"
+                    <HorizontalStackLayout Grid.RowSpan="2" HorizontalOptions="Start" VerticalOptions="Center">
+                        <Image Source="thermometer"
+                               HeightRequest="50"/>
+                        <Label Text="29°"
                            FontSize="50"
                            TextColor="Black"
                            VerticalOptions="Center"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center"/>
+                    </HorizontalStackLayout>
+                    
                     <BoxView Grid.Column="1" Grid.RowSpan="2" BackgroundColor="Gray" WidthRequest="1" />
 
                     <!-- fan status -->
@@ -80,28 +87,120 @@
                     </LinearGradientBrush>
                 </Frame.Background>
                 <Grid ColumnDefinitions="0.2*,0.6*,0.2*" Padding="0" Margin="-10">
-                    <Button Text="-"
-                            Style="{StaticResource incBtn}"/>
-                    <Label Grid.Column="1"
+                    <Button x:Name="minTempBtn"
+                            Text="-"
+                            Style="{StaticResource incBtn}"
+                            Clicked="minTempBtn_Clicked"/>
+                    <Label x:Name="lblTempSet"
+                           Grid.Column="1"
                            Text="12°C"
                            Style="{StaticResource lblSmall}"
                            FontSize="35"
                            TextColor="Wheat"/>
-                    <Button Text="+"
+                    <Button x:Name="pluTempBtn"
+                            Text="+"
                             Grid.Column="2"
-                            Style="{StaticResource incBtn}"/>
+                            Style="{StaticResource incBtn}"
+                            Clicked="pluTempBtn_Clicked"/>
                 </Grid>
             </Frame>
 
             <!-- Sensor Row -->
             <Grid ColumnDefinitions="*,*" RowDefinitions="*,*,*">
+                
+                <!--- Row 1 (temp only) -->
                 <Frame Style="{StaticResource frameStd}">
-                    
+                    <Grid RowDefinitions="0.2*,0.8*" HeightRequest="125">
+                        <Label Text="Sensor No. 1"
+                               FontSize="15" />
+                        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Start" VerticalOptions="Start" Margin="0, 20, 0, 0">
+                            <Image Source="thermometer" HeightRequest="50" />
+                            <Label 
+                               Text="15°C"
+                               FontSize="40"
+                               FontAttributes="Bold"/>
+                        </HorizontalStackLayout>
+                        
+                    </Grid>
                 </Frame>
                 <Frame Style="{StaticResource frameStd}"
                        Grid.Column="1">
+                    <Grid RowDefinitions="0.2*,0.8*" HeightRequest="125">
+                        <Label Text="Sensor No. 2"
+                               FontSize="15" />
+                        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Start" VerticalOptions="Start" Margin="0, 20, 0, 0">
+                            <Image Source="thermometer" HeightRequest="50" />
+                            <Label 
+                               Text="15°C"
+                               FontSize="40"
+                               FontAttributes="Bold"/>
+                        </HorizontalStackLayout>
 
+                    </Grid>
                 </Frame>
+
+                
+                <!-- Row 2 -->
+                <Frame Style="{StaticResource frameStd}"
+                       Grid.Row="1">
+                    <Grid RowDefinitions="0.2*,0.8*" HeightRequest="125">
+                        <Label Text="Sensor No. 3"
+                               FontSize="15" />
+                        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Start" VerticalOptions="Start" Margin="0, 20, 0, 0">
+                            <Image Source="thermometer" HeightRequest="50" />
+                            <Label 
+                               Text="15°C"
+                               FontSize="40"
+                               FontAttributes="Bold"/>
+                        </HorizontalStackLayout>
+
+                    </Grid>
+                </Frame> <!-- Temp Probe 3-->
+                <Frame Style="{StaticResource frameStd}"
+                       Grid.Column="1"
+                       Grid.Row="1">
+                    <Grid RowDefinitions="0.2*,0.8*" HeightRequest="125">
+                        <Label Text="Fan No. 1"
+                               FontSize="15" />
+                        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Start" VerticalOptions="Start" Margin="0, 20, 0, 0">
+                            <Image Source="fan_circled" HeightRequest="50" />
+                            <Label 
+                               Text="25%"
+                               FontSize="40"
+                               FontAttributes="Bold"/>
+                        </HorizontalStackLayout>
+
+                    </Grid>
+                </Frame> <!-- Fan 1 -->
+
+                <!-- Row 3 -->
+                <Frame Style="{StaticResource frameStd}"
+                       Grid.Row="2">
+                    <Grid RowDefinitions="0.2*,0.8*" HeightRequest="125">
+                        <Label Text="Vent No. 1"
+                               FontSize="15" />
+                        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Center" VerticalOptions="Start" Margin="0, 20, 0, 0">
+                            <Image Source="vent" HeightRequest="75" />
+                        </HorizontalStackLayout>
+
+                    </Grid>
+                </Frame> <!-- Fan -->
+                <Frame Style="{StaticResource frameStd}"
+                       Grid.Column="1"
+                       Grid.Row="2">
+                    <!--<Grid RowDefinitions="0.2*,0.8*" HeightRequest="125">
+                        <Label Text="Sensor No. 6"
+                               FontSize="15" />
+                        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="Start" VerticalOptions="Start" Margin="0, 20, 0, 0">
+                            <Image Source="thermometer" HeightRequest="50" />
+                            <Label 
+                               Text="15°C"
+                               FontSize="40"
+                               FontAttributes="Bold"/>
+                        </HorizontalStackLayout>
+
+                    </Grid>-->
+                </Frame> <!-- Empty -->
             </Grid>
         </VerticalStackLayout>
     </ScrollView>
