@@ -72,6 +72,13 @@ bool isCombi = true; //set to combi-mode: one ESP, servo and fan
 
 // functions to setup and use the esp connected motors and sensors
 
+// turn white led on for a short time (flash)
+void flash() {
+    digitalWrite(sendLED, HIGH);
+    delay(200);
+    digitalWrite(sendLED, LOW);
+}
+
 // set LEDC value, brightness is variable
 void setLEDC(int brightness) {
     if (brightness >= 0 && brightness <= 255) {
@@ -161,6 +168,7 @@ void callbackCombi(char* topic, byte *payload, unsigned int length) {
     } else {
         Serial.println("ERROR: problem in combiCallback");
     }
+    flash();
 }
 
 // clabback function for sensors
@@ -174,6 +182,7 @@ void callback(char* topic, byte *payload, unsigned int length) {
     Serial.print("data: ");
     Serial.write(payload, length);
     Serial.println();
+    flash();
 }
 
 // callback function for servo
@@ -185,6 +194,7 @@ void callbackServo(char* topic, byte *payload, unsigned int length) {
 
     Serial.println(step);
     setServoPos(step);
+    flash();
 }
 
 // callback function for fan
@@ -196,6 +206,7 @@ void callbackFan(char* topic, byte *payload, unsigned int length) {
 
     Serial.println(speed);
     setFanC(speed);
+    flash();
 }
 
 // initialize mqtt
@@ -342,6 +353,7 @@ void publishTempReading(float temp) {
     Serial.println(tempString.c_str());
     Serial.println("#*#*#");
     pubSubClient.publish(topicData.c_str(), tempString.c_str());
+    flash();
 }
 
 // initialize esp as sensor esp
@@ -441,6 +453,7 @@ void setup() {
     Serial.println("====          Starting main process         ====");
     Serial.println("==== Communication alive to MQTT ====");
     pubSubClient.publish(topicAlive.c_str(), "alive");
+    flash();
     Serial.println("================================================");
     
     turnStatLEDOn();
