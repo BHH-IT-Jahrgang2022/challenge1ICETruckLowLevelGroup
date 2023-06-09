@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <WiFiClient.h>
+#include <pthread.h>
 
 // sensor libs
 #include "DHT.h"
@@ -31,6 +32,7 @@ String clientid = "ESP32Sense1";
 String topicAlive = "sensors/ESP32Sense1/alive/";
 String topicData = "sensors/ESP32Sense1/temp/data/";
 String topicControl = "sensors/control/";
+String topicTempControl = "sensors/temp/control";
 
 
 
@@ -178,6 +180,18 @@ void callback(char* topic, byte *payload, unsigned int length) {
     flash();
 }
 
+// callback function for sensors
+void callbackTempSensor(char* topic, byte *payload, unsigned int length) {
+
+    // this all is pfusch ==> TODO: Make it properly!
+    payload[length] = 0;
+    int value = String((char *) payload).toInt();
+    
+    Serial.println(value);
+    targetTemp = value;
+    flash();
+    }
+
 // callback function for servo
 void callbackServo(char* topic, byte *payload, unsigned int length) {
 
@@ -209,7 +223,7 @@ void initMQTT() {
 
     pubSubClient.setServer(domain, 1883);
 
-   pubSubClient.setCallback(callback);  // insert callback function according to ESP type
+   pubSubClient.setCallback(callbackTempSensor);  // insert callback function according to ESP type
 
     while(!pubSubClient.connected()) {
         Serial.println("Attempting connection...");
@@ -217,7 +231,7 @@ void initMQTT() {
         if (pubSubClient.connect(clientid.c_str(), usernameMQTT, passwordMQTT)) {
             Serial.println("MQTT connected");
             pubSubClient.publish(topicAlive.c_str(), "connect");
-            pubSubClient.subscribe(topicControl.c_str());  // adjust control topic/s here (for now)
+            pubSubClient.subscribe(topicTempControl.c_str());  // adjust control topic/s here (for now)
         } else {
             Serial.print("Failed, trying again! REASON: ");
             Serial.print(pubSubClient.state());
@@ -348,22 +362,6 @@ void publishTempReading(float temp) {
     flash();
 }
 
-// initialize esp as sensor esp
-void initSensorPart() {
-    // Pin init
-    Serial.println("==== Initializing pins                      ====");
-
-    setPinStatus();
-
-    Serial.println("==== Initialized pins                       ====");
-
-    Serial.println("==== Initializing DHT Sensor                ====");
-
-    initDHT();
-
-    Serial.println("==== Initialized DHT Sensor                 ====");
-}
-
 // initialize esp to servo usage
 void initServoPart() {
     Serial.println("==== Initializing servo                     ====");
@@ -396,6 +394,53 @@ void initCombi() {
     initFanPart();
 }
 
+// setup threading for the sense esps
+void *protothreadPublishTemp(void *dumbThread) {
+    publishTempReading(getTempReading());
+    setLEDC(tempBrightness(getTempReading()));
+    delay(1000);
+}
+
+void *protothreadSubscription(void *dumbThread) {
+    pubSubClient.loop();
+}
+
+// initialize esp as sensor esp
+void initSensorPart() {
+    // Pin init
+    Serial.println("==== Initializing pins                      ====");
+
+    setPinStatus();
+
+    Serial.println("==== Initialized pins                       ====");
+
+    Serial.println("==== Initializing DHT Sensor                ====");
+
+    initDHT();
+
+    Serial.println("==== Initialized DHT Sensor                 ====");
+}
+
+// setup threading, see https://techtutorialsx.com/2017/12/30/esp32-arduino-using-the-pthreads-library/
+void setupThreading () {
+    Serial.println("==== Initializing Threading                 ====");
+
+    pthread_t threads[2];
+    int returnValuePublishThread;
+    int returnValueSubscriptionThread;
+
+    Serial.println("==== Initialized Threading                  ====");
+
+
+    Serial.println("==== Starting Threads now                   ====");
+
+    returnValuePublishThread = pthread_create(&threads[0], NULL, protothreadPublishTemp, (void *)0);
+    returnValueSubscriptionThread = pthread_create(&threads[1], NULL, protothreadSubscription, (void *)1);
+
+    if (returnValuePublishThread || returnValueSubscriptionThread) {
+        Serial.println("ERROR: Threading for ESPs caused an error");
+    }
+}
 
 void setup() {
     
@@ -449,12 +494,17 @@ void setup() {
     Serial.println("================================================");
     
     turnStatLEDOn();
+
+    if (isSensor) {
+        setupThreading();
+    }
 }
 
 void loop() {
 
     if (isSensor) {
         publishTempReading(getTempReading());
+        setLEDC(tempBrightness(getTempReading()));
         delay(1000);
     } else {
         pubSubClient.loop();
