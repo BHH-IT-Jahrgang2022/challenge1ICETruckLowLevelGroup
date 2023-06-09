@@ -1,11 +1,7 @@
 #include <Arduino.h>
-//#include <Wire.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <WiFiClient.h>
-
-//#include "mqttHandler.h"
-//#include "datahelper.h"
 
 // sensor libs
 #include "DHT.h"
@@ -13,17 +9,21 @@
 // servo libs
 #include <Servo.h>
 
-int dhtSense = 23;
 
+// connection and mqtt
+WiFiClient wifiClient;
+PubSubClient pubSubClient;
+
+
+// LEDs
 int statLED = 2;
 int sendLED = 4;
 int senseLED = 15;
 
+// sensor
+int dhtSense = 23;
 
-WiFiClient wifiClient;
-PubSubClient pubSubClient;
 
-//DataHelper datahelper;
 
 /*
 // change depending on sensor
@@ -33,12 +33,6 @@ String topicData = "/sensors/data/ESP/";
 String topicControl = "/sensors/control/ESP/";
 */
 
-/*
-String clientid = "ESP32Fan1";
-String topicAlive = "fans/ESP32Fan1/alive/";
-String topicData = "fans/ESP32Fan1/data/";
-String topicControl = "fans/ESP32Fan1/control/";
-*/
 
 String clientid = "ESP32Motors1";
 String topicAlive = "motors/ESP32Motors1/alive/";
@@ -46,6 +40,8 @@ String topicData = "motors/ESP32Motors1/data/";
 String topicFanControl = "motors/ESP32Motors1/fan/control/";
 String topicServoControl = "motors/ESP32Motors1/servo/control/";
 
+
+// more global configs
 const char* domain = "pi-johanna.local";
 const char* usernameMQTT = "low_level";
 const char* passwordMQTT = "mqttguys";
@@ -73,6 +69,10 @@ bool isServo = false;
 bool isFan = false; // change to fan mode
 bool isCombi = true; //set to combi-mode: one ESP, servo and fan
 
+
+// functions to setup and use the esp connected motors and sensors
+
+// set LEDC value, brightness is variable
 void setLEDC(int brightness) {
     if (brightness >= 0 && brightness <= 255) {
         ledcWrite(ledChannel, brightness);
@@ -88,9 +88,9 @@ void setLEDC(int brightness) {
     }
 }
 
+// set FanC value, speed is variable
 void setFanC(int speed) {
     if (speed >= 0 && speed <= 255) {
-        Serial.println("LALALA");
         ledcWrite(fanChannel, speed);
     }
     else if (speed > 255) {
@@ -100,13 +100,13 @@ void setFanC(int speed) {
         ledcWrite(fanChannel, 0);
     }
     else {
-        Serial.print("ERROR: LEDC brightness is not an int");
+        Serial.print("ERROR: FanC speed is not an int");
     }
 }
 
+// set servo position, value 0 to 8
 void setServoPos(int position) {
     if (position != oldPos) {
-        Serial.println("HIHIHI");
         int degr = 0;
         switch(position) {
             case 0:
@@ -145,18 +145,17 @@ void setServoPos(int position) {
     }
 }
 
+// merged callback function for fan and servo
 void callbackCombi(char* topic, byte *payload, unsigned int length) {
     payload[length] = 0;
     String topicString = topic;
     int value = String((char *) payload).toInt();
     if (topicString.equals(topicFanControl)) {
-        Serial.println("HUHU");
         Serial.print(topic);
         Serial.println(value);
         setFanC(value);
     } else if (topicString.equals(topicServoControl)) {
         Serial.print(topic);
-        Serial.println("I AM HERE!");
         Serial.println(value);
         setServoPos(value);
     } else {
@@ -164,6 +163,7 @@ void callbackCombi(char* topic, byte *payload, unsigned int length) {
     }
 }
 
+// clabback function for sensors
 void callback(char* topic, byte *payload, unsigned int length) {
 
     // this all is pfusch ==> TODO: Make it properly!
@@ -176,6 +176,7 @@ void callback(char* topic, byte *payload, unsigned int length) {
     Serial.println();
 }
 
+// callback function for servo
 void callbackServo(char* topic, byte *payload, unsigned int length) {
 
     // this all is pfusch ==> TODO: Make it properly!
@@ -186,6 +187,7 @@ void callbackServo(char* topic, byte *payload, unsigned int length) {
     setServoPos(step);
 }
 
+// callback function for fan
 void callbackFan(char* topic, byte *payload, unsigned int length) {
 
     // this all is pfusch ==> TODO: Make it properly!
@@ -196,20 +198,12 @@ void callbackFan(char* topic, byte *payload, unsigned int length) {
     setFanC(speed);
 }
 
+// initialize mqtt
 void initMQTT() {
 
     pubSubClient = PubSubClient(wifiClient);
 
     pubSubClient.setServer(domain, 1883);
-    /*
-    if (isServo) {
-        pubSubClient.setCallback(callbackServo);
-    } else if (isFan) {
-        pubSubClient.setCallback(callbackFan);
-    } else {
-        pubSubClient.setCallback(callback);
-    }
-    */
 
    pubSubClient.setCallback(callbackCombi);  // insert callback function according to ESP type
 
@@ -230,26 +224,15 @@ void initMQTT() {
     }
 }
 
+// initialize wifi
 void initWiFi() {
     Serial.println("Initializing SPFISS...");
-
-    //datahelper = DataHelper();
 
     Serial.println("Connecting to WiFi...");
 
     Serial.println("Loading credentials...");
 
-    //std::array<std::string, 2> credentials = datahelper.getWiFiCredentials();
-
     Serial.println("Connecting");
-    // TODO: Debug Wifi shit
-
-    Serial.println("*#*#*");
-    //Serial.println(datahelper.getWiFiSSID().c_str());
-    //Serial.println(datahelper.getWiFiPASSWD().c_str());
-    Serial.println("*#*#*");
-
-    //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
   
     WiFi.begin("BembelNet", "Go2TheBembelWifiNetwork2023!");
 
@@ -266,19 +249,29 @@ void initWiFi() {
     Serial.println(WiFi.localIP().toString());
 }
 
+// initialize temp sensor
 void initDHT() {
     dht.begin();
 }
 
+// initialize servo motor
 void initServo() {
     servoVent.attach(servoPin);
     servoVent.write(0); // home it
 }
 
+// set status led to on
 void turnStatLEDOn() {
     digitalWrite(statLED, HIGH);
 }
 
+// setup LED for LEDC
+void LEDCSetup(int ledPin) {
+    ledcSetup(ledChannel, freq, resolution);
+    ledcAttachPin(ledPin, ledChannel);
+}
+
+// setup pin outputs for sensor esps
 void setPinStatus() {
     Serial.println("Setting status LED...");
     pinMode(statLED, OUTPUT);
@@ -288,39 +281,31 @@ void setPinStatus() {
 
     Serial.println("Setting sensor LED...");
     pinMode(senseLED, OUTPUT);
+    LEDCSetup(senseLED);
+    setLEDC(0);
 
     Serial.println("Setting dht sensor pin...");
     pinMode(dhtSense, INPUT);
 }
 
-void setPinStatusServo() {
+// setup pin outputs for motors esps
+void setPinStatusMotors() {
     Serial.println("Setting status LED...");
     pinMode(statLED, OUTPUT);
 
     Serial.println("Setting data LED...");
     pinMode(sendLED, OUTPUT);
-
-    Serial.println("Setting sensor LED...");
-    pinMode(senseLED, OUTPUT);
-
-    Serial.println("Setting dht sensor pin...");
-    pinMode(dhtSense, INPUT);
-
-    pinMode(servoPin, OUTPUT);
 }
 
-void LEDCSetup(int ledPin) {
-    ledcSetup(ledChannel, freq, resolution);
-    ledcAttachPin(ledPin, ledChannel);
-}
-
+// setup fan pin for LEDC
 void fanCSetup(int fanPin) {
     ledcSetup(fanChannel, freq, resolution);
     ledcAttachPin(fanPin, fanChannel);
 }
 
+// convert temperature to brightness of temp led (for LEDC)
 int tempBrightness(float temp) {
-    if (temp == -18.0) {
+    if (temp == targetTemp) {
         return 0;
     }
     else {
@@ -340,6 +325,7 @@ int tempBrightness(float temp) {
     }
 }
 
+// read out current temperature
 float getTempReading() {
     float temp = dht.readTemperature();
     Serial.print("Temp: ");
@@ -348,6 +334,7 @@ float getTempReading() {
     return temp;
 }
 
+// publish temp to mqtt
 void publishTempReading(float temp) {
     Serial.println("#*#*#");
     Serial.println(temp);
@@ -357,6 +344,7 @@ void publishTempReading(float temp) {
     pubSubClient.publish(topicData.c_str(), tempString.c_str());
 }
 
+// initialize esp as sensor esp
 void initSensorPart() {
     // Pin init
     Serial.println("==== Initializing pins                      ====");
@@ -372,20 +360,17 @@ void initSensorPart() {
     Serial.println("==== Initialized DHT Sensor                 ====");
 }
 
+// initialize esp to servo usage
 void initServoPart() {
-    Serial.println("==== Initializing pins                      ====");
-
-    setPinStatusServo();
-
-    Serial.println("==== Initialized pins                       ====");
-
     Serial.println("==== Initializing servo                     ====");
 
+    pinMode(servoPin, OUTPUT);
     initServo();
 
     Serial.println("==== Initialized servo                      ====");
 }
 
+// initialize esp to fan usage
 void initFanPart() {
     Serial.println("==== Initializing pins                      ====");
 
@@ -396,40 +381,25 @@ void initFanPart() {
     setFanC(0);
 }
 
+// initialize esp for combi motors usage (fan and servo)
 void initCombi() {
+    Serial.println("==== Initializing pins                      ====");
+
+    setPinStatusMotors();
+
+    Serial.println("==== Initialized pins                       ====");
     initServoPart();
     initFanPart();
 }
+
 
 void setup() {
     
     Serial.begin(115200);
     Serial.println("================================================");
     Serial.println("==== ESP32; challenge1ICETruck Arduino Code ====");
-    Serial.println("==== Compiled on 30/05/2023                 ====");
+    Serial.println("==== Compiled on 09/06/2023                 ====");
     Serial.println("==== Booting up                             ====");
-
-/*
-    // I2C Init
-
-    Serial.println("==== Initializing I2C ===");
-    
-    Serial.println("Setting pins...");
-    Wire.setPins(i2cSDA, i2cSCL);
-    Serial.println("Enabling I2C...");
-    
-    bool status = Wire.begin();
-    
-    if (status) {
-        turnStatLEDOn();
-        Serial.println("Started I2C successfully...");
-    } else {
-        Serial.println("ERROR! Failed to init I2C! Aborting startup!");
-        return;
-    }
-    
-    Serial.println("==== Initialized I2C ====");
-*/
 
     if (isSensor) {
         initSensorPart();
@@ -471,11 +441,9 @@ void setup() {
     Serial.println("====          Starting main process         ====");
     Serial.println("==== Communication alive to MQTT ====");
     pubSubClient.publish(topicAlive.c_str(), "alive");
-    //mqttHandler.sendAlive();
     Serial.println("================================================");
     
     turnStatLEDOn();
-    //LEDCSetup(senseLED);
 }
 
 void loop() {
