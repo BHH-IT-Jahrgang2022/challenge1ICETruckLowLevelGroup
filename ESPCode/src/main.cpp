@@ -5,7 +5,7 @@
 #include <WiFiClient.h>
 
 //#include "mqttHandler.h"
-#include "datahelper.h"
+//#include "datahelper.h"
 
 // sensor libs
 #include "DHT.h"
@@ -23,7 +23,7 @@ int senseLED = 15;
 WiFiClient wifiClient;
 PubSubClient pubSubClient;
 
-DataHelper datahelper;
+//DataHelper datahelper;
 
 /*
 // change depending on sensor
@@ -33,10 +33,18 @@ String topicData = "/sensors/data/ESP/";
 String topicControl = "/sensors/control/ESP/";
 */
 
+/*
 String clientid = "ESP32Fan1";
 String topicAlive = "fans/ESP32Fan1/alive/";
 String topicData = "fans/ESP32Fan1/data/";
 String topicControl = "fans/ESP32Fan1/control/";
+*/
+
+String clientid = "ESP32Motors1";
+String topicAlive = "motors/ESP32Motors1/alive/";
+String topicData = "motors/ESP32Motors1/data/";
+String topicFanControl = "motors/ESP32Motors1/fan/control/";
+String topicServoControl = "motors/ESP32Motors1/servo/control/";
 
 const char* domain = "pi-johanna.local";
 const char* usernameMQTT = "low_level";
@@ -46,21 +54,24 @@ const int freq = 5000;
 const int ledChannel = 0;
 const int resolution = 8;
 
+const int fanChannel = 8;
+
 const float targetTemp = -18.0;
 const float maxDiff = 13.0;
 
 DHT dht(dhtSense, DHT22);
 
 Servo servoVent;
-int servoPin = 21;
+int servoPin = 19;
 
-int fanPin = 19;
+int fanPin = 32;
 
 int oldPos = 15;
 
 bool isSensor = false; // change mode from sensor to motor
 bool isServo = false;
-bool isFan = true; // change to fan mode
+bool isFan = false; // change to fan mode
+bool isCombi = true; //set to combi-mode: one ESP, servo and fan
 
 void setLEDC(int brightness) {
     if (brightness >= 0 && brightness <= 255) {
@@ -79,13 +90,14 @@ void setLEDC(int brightness) {
 
 void setFanC(int speed) {
     if (speed >= 0 && speed <= 255) {
-        ledcWrite(ledChannel, speed);
+        Serial.println("LALALA");
+        ledcWrite(fanChannel, speed);
     }
     else if (speed > 255) {
-        ledcWrite(ledChannel, 255);
+        ledcWrite(fanChannel, 255);
     }
     else if (speed < 0) {
-        ledcWrite(ledChannel, 0);
+        ledcWrite(fanChannel, 0);
     }
     else {
         Serial.print("ERROR: LEDC brightness is not an int");
@@ -94,6 +106,7 @@ void setFanC(int speed) {
 
 void setServoPos(int position) {
     if (position != oldPos) {
+        Serial.println("HIHIHI");
         int degr = 0;
         switch(position) {
             case 0:
@@ -132,6 +145,24 @@ void setServoPos(int position) {
     }
 }
 
+void callbackCombi(char* topic, byte *payload, unsigned int length) {
+    payload[length] = 0;
+    String topicString = topic;
+    int value = String((char *) payload).toInt();
+    if (topicString.equals(topicFanControl)) {
+        Serial.println("HUHU");
+        Serial.print(topic);
+        Serial.println(value);
+        setFanC(value);
+    } else if (topicString.equals(topicServoControl)) {
+        Serial.print(topic);
+        Serial.println("I AM HERE!");
+        Serial.println(value);
+        setServoPos(value);
+    } else {
+        Serial.println("ERROR: problem in combiCallback");
+    }
+}
 
 void callback(char* topic, byte *payload, unsigned int length) {
 
@@ -144,7 +175,6 @@ void callback(char* topic, byte *payload, unsigned int length) {
     Serial.write(payload, length);
     Serial.println();
 }
-
 
 void callbackServo(char* topic, byte *payload, unsigned int length) {
 
@@ -181,7 +211,7 @@ void initMQTT() {
     }
     */
 
-   pubSubClient.setCallback(callbackFan);  // insert callback function according to ESP type
+   pubSubClient.setCallback(callbackCombi);  // insert callback function according to ESP type
 
     while(!pubSubClient.connected()) {
         Serial.println("Attempting connection...");
@@ -189,7 +219,8 @@ void initMQTT() {
         if (pubSubClient.connect(clientid.c_str(), usernameMQTT, passwordMQTT)) {
             Serial.println("MQTT connected");
             pubSubClient.publish(topicAlive.c_str(), "connect");
-            pubSubClient.subscribe(topicControl.c_str());
+            pubSubClient.subscribe(topicFanControl.c_str());  // adjust control topic/s here (for now)
+            pubSubClient.subscribe(topicServoControl.c_str());
         } else {
             Serial.print("Failed, trying again! REASON: ");
             Serial.print(pubSubClient.state());
@@ -202,20 +233,20 @@ void initMQTT() {
 void initWiFi() {
     Serial.println("Initializing SPFISS...");
 
-    datahelper = DataHelper();
+    //datahelper = DataHelper();
 
     Serial.println("Connecting to WiFi...");
 
     Serial.println("Loading credentials...");
 
-    std::array<std::string, 2> credentials = datahelper.getWiFiCredentials();
+    //std::array<std::string, 2> credentials = datahelper.getWiFiCredentials();
 
     Serial.println("Connecting");
     // TODO: Debug Wifi shit
 
     Serial.println("*#*#*");
-    Serial.println(datahelper.getWiFiSSID().c_str());
-    Serial.println(datahelper.getWiFiPASSWD().c_str());
+    //Serial.println(datahelper.getWiFiSSID().c_str());
+    //Serial.println(datahelper.getWiFiPASSWD().c_str());
     Serial.println("*#*#*");
 
     //WiFi.begin(datahelper.getWiFiSSID().c_str(), datahelper.getWiFiPASSWD().c_str());
@@ -284,8 +315,8 @@ void LEDCSetup(int ledPin) {
 }
 
 void fanCSetup(int fanPin) {
-    ledcSetup(ledChannel, freq, resolution);
-    ledcAttachPin(fanPin, ledChannel);
+    ledcSetup(fanChannel, freq, resolution);
+    ledcAttachPin(fanPin, fanChannel);
 }
 
 int tempBrightness(float temp) {
@@ -365,6 +396,11 @@ void initFanPart() {
     setFanC(0);
 }
 
+void initCombi() {
+    initServoPart();
+    initFanPart();
+}
+
 void setup() {
     
     Serial.begin(115200);
@@ -401,6 +437,8 @@ void setup() {
         initFanPart();
     } else if (isServo) {
         initServoPart();
+    } else if (isCombi) {
+        initCombi();
     } else {
         Serial.println("!!#!!     no ESP type given    !!#!!");
         while(true) {
@@ -461,6 +499,38 @@ void loop() {
     }
     Serial.println("=== Brightness of LED low ===");
     publishTempReading(getTempReading());
+    delay(1000);
+*/
+
+/*
+    setFanC(0);
+    setServoPos(0);
+    Serial.println();
+    Serial.println("+++   +++   Motors set to 0   +++   +++");
+    delay(1000);
+    setServoPos(2);
+    Serial.println("+++   +++   Servo set to position 2   +++   +++");
+    delay(1000);
+    setFanC(160);
+    Serial.println("+++   +++   Fan set to 160   +++   +++");
+    delay(1000);
+    setServoPos(6);
+    Serial.println("+++   +++   Servo set to position 6   +++   +++");
+    delay(1000);
+    setFanC(255);
+    Serial.println("+++   +++   Fan set to 255   +++   +++");
+    delay(1000);
+    setServoPos(0);
+    Serial.println("+++   +++   Servo set to position 0   +++   +++");
+    delay(1000);
+    setFanC(100);
+    Serial.println("+++   +++   Fan set to 100   +++   +++");
+    delay(1000);
+    setServoPos(8);
+    Serial.println("+++   +++   Servo set to position 8   +++   +++");
+    delay(1000);
+    setFanC(0);
+    Serial.println("+++   +++   Fan set to 0   +++   +++");
     delay(1000);
 */
 }
