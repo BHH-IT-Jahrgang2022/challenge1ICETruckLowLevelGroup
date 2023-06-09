@@ -54,7 +54,7 @@ const int freq = 5000;
 const int ledChannel = 0;
 const int resolution = 8;
 
-const int fanChannel = 1;
+const int fanChannel = 8;
 
 const float targetTemp = -18.0;
 const float maxDiff = 13.0;
@@ -62,9 +62,9 @@ const float maxDiff = 13.0;
 DHT dht(dhtSense, DHT22);
 
 Servo servoVent;
-int servoPin = 32;  // 21
+int servoPin = 19;
 
-int fanPin = 19;
+int fanPin = 32;
 
 int oldPos = 15;
 
@@ -449,7 +449,7 @@ void setup() {
     Serial.println("==== Initializing WiFi ====");
 
     // Init WiFi
-    //initWiFi();
+    initWiFi();
 
     Serial.println("==== Initialized WiFi ====");
 
@@ -461,7 +461,7 @@ void setup() {
 
     Serial.println("==== Initializing MQTT                      ====");
         
-    //initMQTT();
+    initMQTT();
 
     Serial.println("==== Initialized MQTT                       ====");
 
@@ -484,7 +484,7 @@ void loop() {
         publishTempReading(getTempReading());
         delay(1000);
     } else {
-        //pubSubClient.loop();
+        pubSubClient.loop();
     }
 /*
     for (int i = 0; i <= 255; i++) {
@@ -501,7 +501,9 @@ void loop() {
     publishTempReading(getTempReading());
     delay(1000);
 */
-    /*setFanC(0);
+
+/*
+    setFanC(0);
     setServoPos(0);
     Serial.println();
     Serial.println("+++   +++   Motors set to 0   +++   +++");
@@ -530,9 +532,5 @@ void loop() {
     setFanC(0);
     Serial.println("+++   +++   Fan set to 0   +++   +++");
     delay(1000);
-    */
-   setServoPos(2);
-   delay(1000);
-   setServoPos(8);
-   delay(1000);
+*/
 }
