@@ -76,6 +76,7 @@
                 </Grid>
             </Frame>
 
+	    <!-- TODO: Add swipe gesture recognizer to change temp by swiping over it (like turning a knob) -->
             <!-- Set target temp selector -->
             <Frame Style="{StaticResource frameStd}">
                 <Frame.Background>
