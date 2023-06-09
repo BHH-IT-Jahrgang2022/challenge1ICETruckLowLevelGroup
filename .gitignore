@@ -3,5 +3,7 @@
 venv
 .venv
 __pycache__
-/app/IceTruckControl/IceTruckControl/obj
-/app/IceTruckControl/.vs/IceTruckControl/v17
+app/ICETruckControl/IceTruckControl/obj
+app/IceTruckControl/IceTruckControl/.vs
+app/IceTruckControl/.vs
+app/ICETruckControl/IceTruckControl/bin

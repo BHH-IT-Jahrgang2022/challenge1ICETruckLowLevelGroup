@@ -3,38 +3,106 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="IceTruckControl.MainPage">
 
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <Style x:Name="lblSmall" TargetType="Label">
+                <Setter Property="FontSize" Value="25"/>
+                <Setter Property="VerticalOptions" Value="Center" />
+                <Setter Property="HorizontalOptions" Value="Center" />
+                <Setter Property="HorizontalTextAlignment" Value="Center" />
+            </Style>
+
+            <Style x:Name="frameStd" TargetType="Frame">
+                <Setter Property="Margin" Value="10" />
+                <Setter Property="BackgroundColor" Value="LightGray"/>
+                <Setter Property="CornerRadius" Value="25" />
+            </Style>
+
+            <Style x:Name="incBtn" TargetType="Button">
+                <Setter Property="HeightRequest" Value="70" />
+                <Setter Property="WidthRequest" Value="70" />
+                <Setter Property="FontSize" Value="25" />
+                <Setter Property="CornerRadius" Value="25" />
+                <Setter Property="BackgroundColor" Value="Black"/>
+                <Setter Property="Opacity" Value="0.5" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+    
     <ScrollView>
-        <VerticalStackLayout
-            Spacing="25"
-            Padding="30,0"
-            VerticalOptions="Center">
+        <VerticalStackLayout>
+            <Frame Style="{StaticResource frameStd}">
+                <Grid RowDefinitions="*,*" ColumnDefinitions="*, 1, *" HeightRequest="150">
+                    <!-- Temp medium -->
+                    <Label Grid.RowSpan="2" 
+                           Text="29°"
+                           FontSize="50"
+                           TextColor="Black"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"/>
+                    <BoxView Grid.Column="1" Grid.RowSpan="2" BackgroundColor="Gray" WidthRequest="1" />
 
-            <Image
-                Source="dotnet_bot.png"
-                SemanticProperties.Description="Cute dot net bot waving hi to you!"
-                HeightRequest="200"
-                HorizontalOptions="Center" />
+                    <!-- fan status -->
 
-            <Label
-                Text="Hello, World!"
-                SemanticProperties.HeadingLevel="Level1"
-                FontSize="32"
-                HorizontalOptions="Center" />
+                    <Grid Margin="10" Grid.Column="2" Grid.RowSpan="2" RowDefinitions="*,*" ColumnDefinitions="0.4*,0.6*">
+                        <Image Source="fan_circled" 
+                               HeightRequest="50"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
 
-            <Label
-                Text="Welcome to .NET Multi-platform App UI"
-                SemanticProperties.HeadingLevel="Level2"
-                SemanticProperties.Description="Welcome to dot net Multi platform App U I"
-                FontSize="18"
-                HorizontalOptions="Center" />
+                        <Label Text="25%"
+                               Style="{StaticResource lblSmall}"
+                               Grid.Column="1"/>
+                        
+                        <Image Source="vent" 
+                               Grid.Row="1"
+                               HeightRequest="50"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+                        <Label Text="open"
+                               Style="{StaticResource lblSmall}"
+                               Grid.Column="1"
+                               Grid.Row="1"/>
 
-            <Button
-                x:Name="CounterBtn"
-                Text="Click me"
-                SemanticProperties.Hint="Counts the number of times you click"
-                Clicked="OnCounterClicked"
-                HorizontalOptions="Center" />
+                    </Grid>
+                 </Grid>
+            </Frame>
 
+            <!-- Set target temp selector -->
+            <Frame Style="{StaticResource frameStd}">
+                <Frame.Background>
+                    <LinearGradientBrush EndPoint="1,0">
+                        <GradientStopCollection>
+                            <GradientStop Offset="0" Color="Blue"/>
+                            <GradientStop Offset="1" Color="Red" />
+                        </GradientStopCollection>
+                    </LinearGradientBrush>
+                </Frame.Background>
+                <Grid ColumnDefinitions="0.2*,0.6*,0.2*" Padding="0" Margin="-10">
+                    <Button Text="-"
+                            Style="{StaticResource incBtn}"/>
+                    <Label Grid.Column="1"
+                           Text="12°C"
+                           Style="{StaticResource lblSmall}"
+                           FontSize="35"
+                           TextColor="Wheat"/>
+                    <Button Text="+"
+                            Grid.Column="2"
+                            Style="{StaticResource incBtn}"/>
+                </Grid>
+            </Frame>
+
+            <!-- Sensor Row -->
+            <Grid ColumnDefinitions="*,*" RowDefinitions="*,*,*">
+                <Frame Style="{StaticResource frameStd}">
+                    
+                </Frame>
+                <Frame Style="{StaticResource frameStd}"
+                       Grid.Column="1">
+
+                </Frame>
+            </Grid>
         </VerticalStackLayout>
     </ScrollView>
 
