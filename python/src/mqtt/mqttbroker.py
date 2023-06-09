@@ -1,4 +1,7 @@
 from paho.mqtt import client as mqtt_client
+import paho.mqtt.subscribe as subscribe
+import paho.mqtt.publish as publish
+import paho.mqtt as mqtt
 import threading
 import time
 
@@ -7,11 +10,13 @@ class Broker:
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
                 print("Connected to MQTT Broker!")
+            else:
+                print("Error on connect?")
         # Set Connecting Client ID
-        self.client = mqtt_client.Client(self.client_id)
         self.client.username_pw_set(self.username, self.password)
         self.client.on_connect = on_connect
-        self.client.connect(self.broker, self.port)
+        result = self.client.connect(self.broker, self.port)
+        print(result)
 
     def on_disconnect(self, client, userdata, rc):
         FIRST_RECONNECT_DELAY = 1
@@ -58,15 +63,18 @@ class Broker:
             self.connected = True
         except Exception as e:
             self.connected = False
-            print(e)
+            print(str(e))
         
-        if self.connected:
-            broker_thread = threading.Thread(target=self.client.loop_forever)
-            broker_thread.start()
+        self.client.loop_start()
+        
+        #if self.connected:
+            #broker_thread = threading.Thread(target=self.client.loop_start())
+            #broker_thread.start()
     
     def disconnect(self):
         if self.connected:
             try:
+                self.client.loop_stop()
                 self.client.disconnect()
                 self.connected = False
             except Exception as e:
@@ -77,8 +85,17 @@ class Broker:
             def on_message(client, userdata, msg):
                 self.queue.append(msg.payload.decode())
                 print(msg.payload.decode())
-            self.client.subscribe(topic)
-            self.client.on_message = on_message
+            try:
+                self.client.loop_stop()
+                self.client.subscribe(topic)
+                self.client.on_message = on_message
+                self.client.loop_start()
+                print(topic)
+                print(self.client.is_connected())
+            except Exception as e:
+                print("Subscribe failed with: " + str(e))
+                return
+            print("subscribed successfully")
     
     def __init__(self, broker, client_id, port=1883, username="", password=""):
         self.broker = 'pi-johanna.local'
@@ -89,4 +106,4 @@ class Broker:
         
         self.connected = False
         self.queue = []
-        self.client = None
+        self.client = mqtt_client.Client(self.client_id)

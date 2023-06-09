@@ -1,13 +1,15 @@
 import mqttbroker as mqtt
 import threading
+import time
 
 class MQTTController:
     def stop_listening(self):
         self.listening = False
     
     def start_listening(self):
-        def listen(self):
+        def listen():
             while self.listening:
+                time.sleep(0.01)
                 if self.broker.queue:
                     print(self.broker.queue.pop())
         if not self.listening:
@@ -18,11 +20,16 @@ class MQTTController:
     def start(self):
         self.running = True
         self.loop()
+        self.start_listening()
     
     def loop(self):
         while self.running:
             input1 = ""
-            input1 = input("Commands: stop, connect, subscribe [topic], unsubscribe [topic]")
+            input1 = input("Commands: stop, connect, subscribe [topic], unsubscribe [topic], publish [topic] [value] \n")
+            print(input1)
+            if (input1.__len__() > 8):
+                print(input1[:7])
+                print(input1[8:])
             if input1 == "stop":
                 if self.broker.is_connected():
                     message = "disconnected successfully"
@@ -41,12 +48,12 @@ class MQTTController:
                     except Exception as e:
                         message = "Error on connect: " + str(e)
                     print(message)
-            if input1.__len__() > 10:
-                if input1[:8] == "subscribe":
-                    if input1[9] == "":
-                        topic = input1[:10]
+            elif input1.__len__() > 9:
+                if input1[:9] == "subscribe":
+                    if input1[9] == " ":
+                        topic = input1[10:]
                         if self.broker.is_connected():
-                            message = "connected successfully"
+                            message = "subscribed successfully"
                             try:
                                 self.broker.subscribe(topic)
                                 self.subscribed_topics.append(topic)
@@ -57,11 +64,11 @@ class MQTTController:
                             print("Not connected to MQTT-Broker")
                     else:
                         print("Invalid command format")
-            elif input1.__len__() > 12:
+            elif input1.__len__() > 11:
                 if input1[:11] == "unsubscribe":
                     message = "unsubscribed successfully"
-                    if input1[12] == "":
-                        topic = input1[:13]
+                    if input1[11] == " ":
+                        topic = input1[12:]
                         if self.broker.is_connected():
                             if topic in self.subscribed_topics:
                                 try:
@@ -76,13 +83,34 @@ class MQTTController:
                     else:
                         message = ("Invalid command format")
                     print(message)
+            elif input1.__len__() > 8:
+                if input1[:7] == "publish":
+                    if input1[7] == " ":
+                        topic, value = input1[8:].split(" ")
+                        if self.broker.is_connected():
+                            message = "subscribed successfully"
+                            try:
+                                self.broker.publish(topic, value)
+                                self.subscribed_topics.append(topic)
+                            except Exception as e:
+                                message = "Error on connect: " + str(e)
+                            print(message)
+                        else:
+                            print("Not connected to MQTT-Broker")
+                    else:
+                        print("Invalid command format")
+            else:
+                print("No valid command entered")
             if self.subscribed_topics and not self.listening:
-                self.start_listening()
+                #self.start_listening()
+                pass
             if self.subscribed_topics.__len__() == 0 and self.listening:
-                self.stop_listening()
+                #self.stop_listening()
+                pass
     
     def stop(self):
         self.running = False
+        self.stop_listening()
         self.broker.disconnect()
     
     def __init__(self):
