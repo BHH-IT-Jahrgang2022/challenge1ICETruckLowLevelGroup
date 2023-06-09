@@ -28,9 +28,9 @@ int dhtSense = 23;
 
 // change depending on sensor
 String clientid = "ESP32Sense1";
-String topicAlive = "/sensors/alive/ESP/";
-String topicData = "/sensors/data/ESP/";
-String topicControl = "/sensors/control/ESP/";
+String topicAlive = "sensors/ESP32Sense1/alive/";
+String topicData = "sensors/ESP32Sense1/temp/data/";
+String topicControl = "sensors/control/";
 
 
 
@@ -45,8 +45,8 @@ const int resolution = 8;
 
 const int fanChannel = 8;
 
-const float targetTemp = -18.0;
-const float maxDiff = 13.0;
+float targetTemp = -18.0;
+const float maxDiff = 7.0;
 
 DHT dht(dhtSense, DHT22);
 
