@@ -1,24 +1,23 @@
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
 from sqlalchemy import select
 import sqlite3
 import json
 import jsonify
 from dataclasses import dataclass
+from marshmallow import Schema, fields, post_load
 
 
 # create the extension
 db = SQLAlchemy()
 # create the app
 app = Flask(__name__)
-#ma = Marshmallow()
 # configure the SQLite database, relative to the app instance folder
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////home//lazaro/test.db"
 # initialize the app with the extension
 db.init_app(app)
 
-#to_josn Methode: 
+#to_json Methode: 
 def to_json(inst, cls):
     """
     Jsonify the sql alchemy query result.
@@ -33,12 +32,21 @@ def to_json(inst, cls):
             try:
                 d[c.name] = convert[c.type](v)
             except:
-                d[c.name] = "Error:  Failed to covert using ", str(convert[c.type])
+                d[c.name] = "Error:  Failed to convert using ", str(convert[c.type])
         elif v is None:
             d[c.name] = str()
         else:
             d[c.name] = v
     return json.dumps(d)
+
+class postSchema(Schema):
+    zeitpunkt = fields.Int()
+    sensor = fields.Str()
+    temperatur = fields.Float()
+
+    @post_load
+    def make_post(self, data, **kwargs):
+        return Temperature(**data)
 
 # Create database with its table and columns
 @dataclass
@@ -75,7 +83,7 @@ with app.app_context():
 def Hello():
     return "Hello World"
 
-# Request JSON
+# Request Send-JSON
 
 @app.route('/json_test', methods=['POST'])
 def handle_json():
@@ -96,11 +104,22 @@ def handle_json():
     finally:
         return return_message, return_code   
 
+# Request Get-JSON
 @app.route("/get_json", methods=['GET'])
 def get_json():
-    #all_posts = Temperature.query.all()
-    all_posts = db.session.execute(select(Temperature)).first()[0]
+    all_posts = Temperature.query.all()
+    #all_posts = db.session.execute(select(Temperature)).first()[0]
+    
+    result = {}
+    index = 0
+    for temp in all_posts:
+        result[index] = temp.json
+        index += 1
+    print(result)
+    #all_posts = db.session.execute(select(Temperature).order_by(Temperature.zeitpunkt)).scalars()
     print(all_posts)
+    #schema = postSchema(many=True)
+    #result = schema.dump(all_posts)
     if all_posts == None:
         return jsonify({}), 404
-    return all_posts.json
+    return json.dumps(result)
