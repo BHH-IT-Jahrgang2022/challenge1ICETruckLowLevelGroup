@@ -5,7 +5,7 @@ namespace IceTruckControl;
 public partial class MainPage : ContentPage
 {
 
-	int tempSet = -271; // just a temp value thats not possible
+	int tempSet = -17; // just a temp value thats not possible
 	public MainPage()
 	{
 		InitializeComponent();
@@ -20,14 +20,14 @@ public partial class MainPage : ContentPage
 
     private void minTempBtn_Clicked(object sender, EventArgs e)
     {
-        if (tempSet > -273)
+        if (tempSet > -40)
         {
             tempSet--;
             updateTempSetView();
-        } /*else if (tempSet > -273.15) {
+        } else if (tempSet > -273.15) {
             Debug.WriteLine("ERROR: This value is not possible for the hardware");
             DisplayAlert("Temp not possible", "Due to Hardware limitations, please stick to a temperature greater than -40", "ok");
-        } */
+        }
         else 
         {
             DisplayAlert("PHYSICS BROKE NOW", 
