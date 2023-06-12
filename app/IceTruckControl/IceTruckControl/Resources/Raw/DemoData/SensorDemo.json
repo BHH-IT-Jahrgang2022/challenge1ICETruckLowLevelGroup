@@ -1,0 +1,10 @@
+{
+  "SensorId": 3,
+  "SensorName": "Sensor No. 3",
+  "Measurement": {
+    // Temp in °C
+    "Temp": 35.0,
+    // Date as Unix Timestamp (this one is: 23:33; 11/06/2023)
+    "DateMeasured": 1686519192
+  }
+}
