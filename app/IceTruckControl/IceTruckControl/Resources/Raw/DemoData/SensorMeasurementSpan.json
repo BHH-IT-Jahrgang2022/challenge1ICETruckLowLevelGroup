@@ -1,0 +1,33 @@
+{
+    "SensorId": 3,
+    "Data": [
+        {
+            "Temp": 12,
+            "TimeMeasured": 1686519192
+        },
+        {
+            "Temp": 13,
+            "TimeMeasured": 1686319192
+        },
+        {
+            "Temp": 12,
+            "TimeMeasured": 1686219192
+        },
+        {
+            "Temp": 11,
+            "TimeMeasured": 1686119192
+        },
+        {
+            "Temp": 9,
+            "TimeMeasured": 1684519192
+        },
+        {
+            "Temp": 12,
+            "TimeMeasured": 1683519192
+        },
+        {
+            "Temp": 22,
+            "TimeMeasured": 1682519192
+        }
+    ]
+}
