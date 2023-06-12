@@ -229,7 +229,7 @@ void initMQTT() {
         if (pubSubClient.connect(clientid.c_str(), usernameMQTT, passwordMQTT)) {
             Serial.println("MQTT connected");
             pubSubClient.publish(topicAlive.c_str(), "connect");
-            pubSubClient.subscribe(topicControl.c_str());  // adjust control topic/s here (for now)
+            pubSubClient.subscribe(topicTempControl.c_str());  // adjust control topic/s here (for now)
         } else {
             Serial.print("Failed, trying again! REASON: ");
             Serial.print(pubSubClient.state());
