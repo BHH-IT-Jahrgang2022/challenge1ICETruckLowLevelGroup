@@ -121,5 +121,10 @@ def get_sensor(sensor_id):
 # Query for a timeintervall
 @app.route("/get_intervall")
 def request_intervall():
-    time_intervall = db.session.query(Temperature).filter(Temperature.zeitpunkt > )
-    return list_to_json(time_intervall)
+    requestParam = request.json
+    if requestParam == None:
+        query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt > requestParam["Beginnzeitpunkt"], Temperature.zeitpunkt < requestParam["Endzeitpunkt"])
+    else:
+        query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt > requestParam["Beginnzeitpunkt"], Temperature.zeitpunkt < requestParam["Endzeitpunkt"], Temperature.sensor == requestParam["sensor"])
+
+    return list_to_json(query_result)
