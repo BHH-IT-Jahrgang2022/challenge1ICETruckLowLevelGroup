@@ -2,7 +2,6 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <WiFiClient.h>
-#include <pthread.h>
 
 // sensor libs
 #include "DHT.h"
@@ -32,7 +31,7 @@ String clientid = "ESP32Sense1";
 String topicAlive = "sensors/ESP32Sense1/alive/";
 String topicData = "sensors/ESP32Sense1/temp/data/";
 String topicControl = "sensors/control/";
-String topicTempControl = "sensors/temp/control";
+String topicTempControl = "sensors/temp/control/";
 
 
 
@@ -63,6 +62,9 @@ bool isSensor = true; // change mode from sensor to motor
 bool isServo = false;
 bool isFan = false; // change to fan mode
 bool isCombi = false; //set to combi-mode: one ESP, servo and fan
+
+TaskHandle_t Task1;
+TaskHandle_t Task2;
 
 
 // functions to setup and use the esp connected motors and sensors
@@ -395,13 +397,15 @@ void initCombi() {
 }
 
 // setup threading for the sense esps
-void *protothreadPublishTemp(void *dumbThread) {
-    publishTempReading(getTempReading());
-    setLEDC(tempBrightness(getTempReading()));
-    delay(1000);
+void taskPublishTemp(void * parameter) {
+    for (;;) {
+        publishTempReading(getTempReading());
+        setLEDC(tempBrightness(getTempReading()));
+        delay(1000);
+    }
 }
 
-void *protothreadSubscription(void *dumbThread) {
+void taskSubscription(void * parameter) {
     pubSubClient.loop();
 }
 
@@ -425,21 +429,36 @@ void initSensorPart() {
 void setupThreading () {
     Serial.println("==== Initializing Threading                 ====");
 
-    pthread_t threads[2];
-    int returnValuePublishThread;
-    int returnValueSubscriptionThread;
 
     Serial.println("==== Initialized Threading                  ====");
 
 
     Serial.println("==== Starting Threads now                   ====");
 
-    returnValuePublishThread = pthread_create(&threads[0], NULL, protothreadPublishTemp, (void *)0);
-    returnValueSubscriptionThread = pthread_create(&threads[1], NULL, protothreadSubscription, (void *)1);
-
-    if (returnValuePublishThread || returnValueSubscriptionThread) {
-        Serial.println("ERROR: Threading for ESPs caused an error");
-    }
+    xTaskCreatePinnedToCore(
+        taskPublishTemp,
+        "Task 1",
+        10000,
+        NULL,
+        1,
+        &Task1,
+        0
+    );
+    delay(500);
+    Serial.println("==== Started Task 1                         ====");
+    
+    xTaskCreatePinnedToCore(
+        taskSubscription,
+        "Task 2",
+        10000,
+        NULL,
+        1,
+        &Task2,
+        1
+    );
+    delay(500);
+    Serial.println("==== Started Task 2                         ====");
+    Serial.println("================================================");
 }
 
 void setup() {
@@ -494,18 +513,15 @@ void setup() {
     Serial.println("================================================");
     
     turnStatLEDOn();
-
-    if (isSensor) {
-        setupThreading();
-    }
 }
 
 void loop() {
 
     if (isSensor) {
-        publishTempReading(getTempReading());
-        setLEDC(tempBrightness(getTempReading()));
-        delay(1000);
+       pubSubClient.loop();
+       publishTempReading(getTempReading());
+       setLEDC(tempBrightness(getTempReading()));
+       delay(1000);
     } else {
         pubSubClient.loop();
     }
