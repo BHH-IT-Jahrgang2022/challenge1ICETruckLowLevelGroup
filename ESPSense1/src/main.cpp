@@ -189,7 +189,7 @@ void callbackTempSensor(char* topic, byte *payload, unsigned int length) {
     Serial.println(value);
     targetTemp = value;
     flash();
-    }
+}
 
 // callback function for servo
 void callbackServo(char* topic, byte *payload, unsigned int length) {

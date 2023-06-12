@@ -31,7 +31,7 @@ String clientid = "ESP32Sense3";
 String topicAlive = "sensors/ESP32Sense3/alive/";
 String topicData = "sensors/ESP32Sense3/temp/data/";
 String topicControl = "sensors/control/";
-
+String topicTempControl = "sensors/temp/control/";
 
 
 // more global configs
@@ -45,7 +45,7 @@ const int resolution = 8;
 
 const int fanChannel = 8;
 
-const float targetTemp = -18.0;
+float targetTemp = -18.0;
 float maxDiff = 7.0;
 
 DHT dht(dhtSense, DHT22);
@@ -202,6 +202,18 @@ void callbackFan(char* topic, byte *payload, unsigned int length) {
     flash();
 }
 
+// callback function for sensors
+void callbackTempSensor(char* topic, byte *payload, unsigned int length) {
+
+    // this all is pfusch ==> TODO: Make it properly!
+    payload[length] = 0;
+    int value = String((char *) payload).toInt();
+    
+    Serial.println(value);
+    targetTemp = value;
+    flash();
+}
+
 // initialize mqtt
 void initMQTT() {
 
@@ -209,7 +221,7 @@ void initMQTT() {
 
     pubSubClient.setServer(domain, 1883);
 
-   pubSubClient.setCallback(callback);  // insert callback function according to ESP type
+   pubSubClient.setCallback(callbackTempSensor);  // insert callback function according to ESP type
 
     while(!pubSubClient.connected()) {
         Serial.println("Attempting connection...");
@@ -454,8 +466,10 @@ void setup() {
 void loop() {
 
     if (isSensor) {
-        publishTempReading(getTempReading());
-        delay(1000);
+       pubSubClient.loop();
+       publishTempReading(getTempReading());
+       setLEDC(tempBrightness(getTempReading()));
+       delay(1000);
     } else {
         pubSubClient.loop();
     }
