@@ -85,7 +85,6 @@ class Broker:
     def subscribe(self, topic):
         if self.connected:
             def on_message(client, userdata, msg):
-                print(msg)
                 self.queue.append((msg.topic, msg.payload.decode()))
                 print(msg.payload.decode())
             try:

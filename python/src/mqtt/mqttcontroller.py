@@ -22,7 +22,8 @@ class MQTTController:
             while self.listening:
                 time.sleep(0.01)
                 if self.broker.queue:
-                    temp = self.broker.queue.pop()
+                    topic, temp = self.broker.queue.pop()
+                    print(topic)
                     print(temp)
                     # integer conversion converts Python Unix with Mili to standard Unix-Second-Timestamp
                     data_to_save = {'timestamp': int(time.time()), 'sensor_id': "sens_01", 'temperature': float(temp)}
