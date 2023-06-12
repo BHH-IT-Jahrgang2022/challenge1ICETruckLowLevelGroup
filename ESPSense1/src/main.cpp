@@ -63,9 +63,6 @@ bool isServo = false;
 bool isFan = false; // change to fan mode
 bool isCombi = false; //set to combi-mode: one ESP, servo and fan
 
-TaskHandle_t Task1;
-TaskHandle_t Task2;
-
 
 // functions to setup and use the esp connected motors and sensors
 
@@ -396,19 +393,6 @@ void initCombi() {
     initFanPart();
 }
 
-// setup threading for the sense esps
-void taskPublishTemp(void * parameter) {
-    for (;;) {
-        publishTempReading(getTempReading());
-        setLEDC(tempBrightness(getTempReading()));
-        delay(1000);
-    }
-}
-
-void taskSubscription(void * parameter) {
-    pubSubClient.loop();
-}
-
 // initialize esp as sensor esp
 void initSensorPart() {
     // Pin init
@@ -425,41 +409,6 @@ void initSensorPart() {
     Serial.println("==== Initialized DHT Sensor                 ====");
 }
 
-// setup threading, see https://techtutorialsx.com/2017/12/30/esp32-arduino-using-the-pthreads-library/
-void setupThreading () {
-    Serial.println("==== Initializing Threading                 ====");
-
-
-    Serial.println("==== Initialized Threading                  ====");
-
-
-    Serial.println("==== Starting Threads now                   ====");
-
-    xTaskCreatePinnedToCore(
-        taskPublishTemp,
-        "Task 1",
-        10000,
-        NULL,
-        1,
-        &Task1,
-        0
-    );
-    delay(500);
-    Serial.println("==== Started Task 1                         ====");
-    
-    xTaskCreatePinnedToCore(
-        taskSubscription,
-        "Task 2",
-        10000,
-        NULL,
-        1,
-        &Task2,
-        1
-    );
-    delay(500);
-    Serial.println("==== Started Task 2                         ====");
-    Serial.println("================================================");
-}
 
 void setup() {
     
