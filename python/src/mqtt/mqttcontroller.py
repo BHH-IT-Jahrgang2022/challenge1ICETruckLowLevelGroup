@@ -1,8 +1,19 @@
 import mqttbroker as mqtt
 import threading
 import time
+import json
 
 class MQTTController:
+    def save_temp(self, temp):
+        try:
+            print(temp)
+            # integer conversion converts Python Unix with Mili to standard Unix-Second-Timestamp
+            data_to_save = {'timestamp': int(time.time()), 'sensor_id': "sens_01", 'temperature': float(temp)}
+            print(data_to_save)
+            json_data = json.dumps(data_to_save)
+        except Exception as e:
+            print(e)
+
     def stop_listening(self):
         self.listening = False
     
@@ -11,7 +22,13 @@ class MQTTController:
             while self.listening:
                 time.sleep(0.01)
                 if self.broker.queue:
-                    print(self.broker.queue.pop())
+                    temp = self.broker.queue.pop()
+                    print(temp)
+                    # integer conversion converts Python Unix with Mili to standard Unix-Second-Timestamp
+                    data_to_save = {'timestamp': int(time.time()), 'sensor_id': "sens_01", 'temperature': float(temp)}
+                    print(data_to_save)
+                    json_data = json.dumps(data_to_save)
+                    #self.save_temp(self.broker.queue.pop())
         if not self.listening:
             self.listening = True
             listener_thread = threading.Thread(target=listen)
@@ -19,8 +36,8 @@ class MQTTController:
     
     def start(self):
         self.running = True
-        self.loop()
         self.start_listening()
+        self.loop()
     
     def loop(self):
         while self.running:
@@ -42,11 +59,10 @@ class MQTTController:
                 if self.broker.is_connected():
                     print("MQTT-Broker is already running!")
                 else:
-                    message = "connected successfully"
-                    try:
-                        self.broker.connect()
-                    except Exception as e:
-                        message = "Error on connect: " + str(e)
+                    message = self.broker.connect()
+                    time.sleep(1)
+                    if self.broker.is_connected():
+                        message += "connected successfully"
                     print(message)
             elif input1.__len__() > 9:
                 if input1[:9] == "subscribe":
@@ -111,6 +127,7 @@ class MQTTController:
     def stop(self):
         self.running = False
         self.stop_listening()
+        time.sleep(1)
         self.broker.disconnect()
     
     def __init__(self):

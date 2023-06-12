@@ -3,6 +3,7 @@ import paho.mqtt.subscribe as subscribe
 import paho.mqtt.publish as publish
 import paho.mqtt as mqtt
 import threading
+import logging
 import time
 
 class Broker:
@@ -57,15 +58,18 @@ class Broker:
     def is_connected(self):
         return self.connected
 
-    def connect(self):    
+    def connect(self):
+        message = ""
         try:
             self.connect_mqtt()
             self.connected = True
         except Exception as e:
             self.connected = False
-            print(str(e))
+            message = str(e)
         
         self.client.loop_start()
+
+        return message
         
         #if self.connected:
             #broker_thread = threading.Thread(target=self.client.loop_start())
@@ -73,23 +77,22 @@ class Broker:
     
     def disconnect(self):
         if self.connected:
-            try:
-                self.client.loop_stop()
-                self.client.disconnect()
-                self.connected = False
-            except Exception as e:
-                print("fatal error on disconnect: {e}")
+            self.connected = False
+            self.client.loop_stop()
+            self.client.disconnect()
+            time.sleep(1)
 
     def subscribe(self, topic):
         if self.connected:
             def on_message(client, userdata, msg):
-                self.queue.append(msg.payload.decode())
+                print(msg)
+                self.queue.append((msg.topic, msg.payload.decode()))
                 print(msg.payload.decode())
             try:
-                self.client.loop_stop()
+                #self.client.loop_stop()
                 self.client.subscribe(topic)
                 self.client.on_message = on_message
-                self.client.loop_start()
+                #self.client.loop_start()
                 print(topic)
                 print(self.client.is_connected())
             except Exception as e:
