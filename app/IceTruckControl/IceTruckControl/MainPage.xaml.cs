@@ -26,7 +26,9 @@ public partial class MainPage : ContentPage
             updateTempSetView();
         } else if (tempSet > -273.15) {
             Debug.WriteLine("ERROR: This value is not possible for the hardware");
-            DisplayAlert("Temp not possible", "Due to Hardware limitations, please stick to a temperature greater than -40", "ok");
+            DisplayAlert("Temp not possible", 
+                        "Due to Hardware limitations, please stick to a temperature greater than -40", 
+                        "ok");
         }
         else 
         {
@@ -46,7 +48,9 @@ public partial class MainPage : ContentPage
         } else 
         {
             Debug.WriteLine("ERROR: This value literally is not possible");
-            DisplayAlert("Temp not possible", "Due to Hardware limitations, please stick to a temperature smaller than 80", "ok");
+            DisplayAlert("Temp not possible", 
+                        "Due to Hardware limitations, please stick to a temperature smaller than 80", 
+                        "ok");
         }
         
     }
