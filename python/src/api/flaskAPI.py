@@ -5,7 +5,7 @@ import sqlite3
 import json
 import jsonify
 from dataclasses import dataclass
-from marshmallow import Schema, fields, post_load
+
 
 
 # create the extension
@@ -39,14 +39,16 @@ def to_json(inst, cls):
             d[c.name] = v
     return json.dumps(d)
 
-class postSchema(Schema):
-    zeitpunkt = fields.Int()
-    sensor = fields.Str()
-    temperatur = fields.Float()
-
-    @post_load
-    def make_post(self, data, **kwargs):
-        return Temperature(**data)
+def list_to_json(query):
+    result = {}
+    index = 0
+    for temp in query:
+        result[index] = temp.json
+        index += 1
+    
+    if query == None:
+        return jsonify({}), 404
+    return json.dumps(result)
 
 # Create database with its table and columns
 @dataclass
@@ -54,7 +56,7 @@ class Temperature(db.Model):
 
     __tablename__ = "data"
 
-    zeitpunkt:int = db.Column(db.INTEGER , primary_key=True)
+    zeitpunkt:int = db.Column(db.bigint , primary_key=True)
     sensor:str = db.Column(db.VARCHAR(20))  
     temperatur:float = db.Column(db.FLOAT)
 
@@ -67,14 +69,12 @@ class Temperature(db.Model):
         self.sensor = sensor
         self.temperatur = temperatur
 
-#class temperatureSchema(ma.Schema):
- #   class Meta:
-    #Fields to expose
-  #      fields = ("zeitpunkt", "sensor", "temperatur")
+
 
 with app.app_context():
     db.drop_all()
     db.create_all()
+
 
 # Endpoint
 
@@ -110,16 +110,16 @@ def get_json():
     all_posts = Temperature.query.all()
     #all_posts = db.session.execute(select(Temperature)).first()[0]
     
-    result = {}
-    index = 0
-    for temp in all_posts:
-        result[index] = temp.json
-        index += 1
-    print(result)
-    #all_posts = db.session.execute(select(Temperature).order_by(Temperature.zeitpunkt)).scalars()
-    print(all_posts)
-    #schema = postSchema(many=True)
-    #result = schema.dump(all_posts)
-    if all_posts == None:
-        return jsonify({}), 404
-    return json.dumps(result)
+    return list_to_json(all_posts)
+
+# Query all data of one sensor
+@app.route("/get_sensor/<sensor_id>", methods=['GET'])
+def get_sensor(sensor_id):
+    allposts_one_sensor = db.session.query(Temperature).filter(Temperature.sensor == sensor_id)
+    return list_to_json(allposts_one_sensor)
+
+# Query for a timeintervall
+@app.route("/get_intervall")
+def request_intervall():
+    time_intervall = db.session.query(Temperature).filter(Temperature.zeitpunkt > )
+    return list_to_json(time_intervall)
