@@ -56,17 +56,19 @@ class Temperature(db.Model):
 
     __tablename__ = "data"
 
-    zeitpunkt:int = db.Column(db.bigint , primary_key=True)
-    sensor:str = db.Column(db.VARCHAR(20))  
+    zeitpunkt:int = db.Column(db.BIGINT , primary_key=True)
+    sensor_id:str = db.Column(db.VARCHAR(20))
+    sensor_name:str = db.Column(db.VARCHAR(20))  
     temperatur:float = db.Column(db.FLOAT)
 
     @property
     def json(self):
         return to_json(self, self.__class__)
 
-    def __init__(self, zeitpunkt, sensor, temperatur):
+    def __init__(self, zeitpunkt, sensor_id, sensor_name, temperatur):
         self.zeitpunkt = zeitpunkt
-        self.sensor = sensor
+        self.sensor_id = sensor_id
+        self.sensor_name = sensor_name
         self.temperatur = temperatur
 
 
@@ -113,18 +115,30 @@ def get_json():
     return list_to_json(all_posts)
 
 # Query all data of one sensor
-@app.route("/get_sensor/<sensor_id>", methods=['GET'])
-def get_sensor(sensor_id):
-    allposts_one_sensor = db.session.query(Temperature).filter(Temperature.sensor == sensor_id)
+@app.route("/get_sensor/<sensor_nr>", methods=['GET'])
+def get_sensor(sensor_nr):
+    allposts_one_sensor = db.session.query(Temperature).filter(Temperature.sensor_id == sensor_nr)
     return list_to_json(allposts_one_sensor)
 
 # Query for a timeintervall
 @app.route("/get_intervall")
 def request_intervall():
     requestParam = request.json
-    if requestParam == None:
-        query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt > requestParam["Beginnzeitpunkt"], Temperature.zeitpunkt < requestParam["Endzeitpunkt"])
+    if requestParam["SensorId"] == "":
+        if requestParam["TimeBegin"] != "" and requestParam["TimeEnd"] != "":
+            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.zeitpunkt <= requestParam["TimeEnd"])
+        elif requestParam["TimeBegin"] == "":
+            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt <= requestParam["TimeEnd"])
+        else:
+            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"])
+
     else:
-        query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt > requestParam["Beginnzeitpunkt"], Temperature.zeitpunkt < requestParam["Endzeitpunkt"], Temperature.sensor == requestParam["sensor"])
+        if requestParam["TimeBegin"] != "" and requestParam["TimeEnd"] != "":
+            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.zeitpunkt <= requestParam["TimeEnd"], Temperature.sensor_id == requestParam["SensorId"])
+        elif requestParam["TimeBegin"] == "":
+            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt <= requestParam["TimeEnd"], Temperature.sensor_id == requestParam["SensorId"])
+        else:
+            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.sensor_id == requestParam["SensorId"])
 
     return list_to_json(query_result)
+
