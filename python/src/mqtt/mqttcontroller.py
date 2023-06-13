@@ -65,7 +65,7 @@ class MQTTController:
                     if self.broker.is_connected():
                         message += "connected successfully"
                     print(message)
-            elif input1.__len__() > 9:
+            if input1.__len__() > 9:
                 if input1[:9] == "subscribe":
                     if input1[9] == " ":
                         topic = input1[10:]
@@ -81,7 +81,7 @@ class MQTTController:
                             print("Not connected to MQTT-Broker")
                     else:
                         print("Invalid command format")
-            elif input1.__len__() > 11:
+            if input1.__len__() > 11:
                 if input1[:11] == "unsubscribe":
                     message = "unsubscribed successfully"
                     if input1[11] == " ":
@@ -100,15 +100,15 @@ class MQTTController:
                     else:
                         message = ("Invalid command format")
                     print(message)
-            elif input1.__len__() > 8:
+            if input1.__len__() > 8:
                 if input1[:7] == "publish":
                     if input1[7] == " ":
                         topic, value = input1[8:].split(" ")
                         if self.broker.is_connected():
-                            message = "subscribed successfully"
+                            message = "published successfully"
                             try:
                                 self.broker.publish(topic, value)
-                                self.subscribed_topics.append(topic)
+                                #self.subscribed_topics.append(topic)
                             except Exception as e:
                                 message = "Error on connect: " + str(e)
                             print(message)
@@ -131,8 +131,86 @@ class MQTTController:
         time.sleep(1)
         self.broker.disconnect()
     
+    def servo_calc(self, temp):
+        dif = temp - self.target_temp
+        if dif > 12:
+            return 8
+        if dif > 11:
+            return 7
+        if dif > 10:
+            return 6
+        if dif > 9:
+            return 5
+        if dif > 8:
+            return 4
+        if dif > 7:
+            return 3
+        if dif > 6:
+            return 2
+        if dif > 5:
+            return 1
+        return 0
+
+    def fan_calc(self, temp):
+        dif = temp - self.target_temp
+        max_dif = 6
+        if dif < 0:
+            return 0
+        return int(dif * 255 / max_dif)
+
+    def challenge_loop(self):
+        last_three = [self.target_temp, self.target_temp, self.target_temp]
+        fan_running = False
+        index = 0
+        while self.challenge_running:
+            time.sleep(0.1)
+            if self.broker.queue.__len__() > 0:
+                last_three[index] = float(self.broker.queue.pop()[1])
+                print(last_three)
+                if index == 2: index = 0
+                else: index += 1
+
+                average_temp = sum(last_three) / last_three.__len__()
+                
+                self.broker.publish("motors/ESP32Motors1/servo/control/", self.servo_calc(average_temp))
+                time.sleep(0.1)
+                
+                fan_speed = self.fan_calc(average_temp)
+
+                if fan_running:
+                    self.broker.publish("motors/ESP32Motors1/fan/control/", fan_speed)
+                elif fan_speed == 0:
+                    self.broker.publish("motors/ESP32Motors1/fan/control/", fan_speed)
+                    fan_running = False
+                else:
+                    self.broker.publish("motors/ESP32Motors1/fan/control/", 170)
+                    time.sleep(0.5)
+                    self.broker.publish("motors/ESP32Motors1/fan/control/", fan_speed)
+
+    def start_challenge(self):
+        try:
+            connected = self.broker.connect()
+        except Exception as e:
+            print(e)
+        time.sleep(3)
+        if connected.__len__() == 0:
+            self.broker.subscribe("sensors/ESP32Sense1/temp/data/")
+            self.broker.subscribe("sensors/ESP32Sense2/temp/data/")
+            self.broker.subscribe("sensors/ESP32Sense3/temp/data/")
+
+            self.target_temp = -18.0
+            self.fan_speed = 0
+
+            self.broker.publish("sensors/temp/control/", self.target_temp)
+            time.sleep(1)
+
+            self.challenge_running = True
+            self.challenge_loop()
+
     def __init__(self):
-        self.broker = mqtt.Broker("pi-johanna.local",f"pi0")
+        self.broker = mqtt.Broker()
         self.running = False
         self.listening = False
         self.subscribed_topics = []
+
+        self.challenge_running = False
