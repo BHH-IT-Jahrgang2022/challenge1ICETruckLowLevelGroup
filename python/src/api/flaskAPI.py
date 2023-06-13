@@ -89,7 +89,6 @@ def Hello():
 
 @app.route('/json_test', methods=['POST'])
 def handle_json():
-    #data = json.loads(request.json)
     data = request.json
     #print(data)
     return_code = 200
@@ -110,7 +109,7 @@ def handle_json():
 @app.route("/get_json", methods=['GET'])
 def get_json():
     all_posts = Temperature.query.all()
-    #all_posts = db.session.execute(select(Temperature)).first()[0]
+    
     
     return list_to_json(all_posts)
 
