@@ -1,0 +1,28 @@
+GET http://127.0.0.1:5000/get_json
+
+#######
+
+POST http://127.0.0.1:5000/json_test HTTP/1.1
+Content-Type: application/json
+
+{
+    "zeitpunkt":12345623120,
+    "sensor_id": "Test", 
+    "sensor_name": "Name",
+    "temperatur": 1.1
+}
+
+#######
+
+GET http://127.0.0.1:5000/get_sensor/Test
+
+#########
+
+GET http://127.0.0.1:5000/get_intervall HTTP/1.1
+Content-Type: application/json
+
+{
+    "SensorId": "",
+    "TimeBegin": "1234562310",
+    "TimeEnd": "12345623123"
+}
