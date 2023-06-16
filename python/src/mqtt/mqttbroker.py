@@ -1,32 +1,39 @@
 from paho.mqtt import client as mqtt_client
+import logging
+import time
+import json
 
+# Handles Communication with the MQTT-Broker
 class Broker:
-    broker = 'pi-johanna.local'
-    port = 1883
-    topic = "python/mqtt"
-    client_id = f'pi0'
-    username = 'low_level'
-    password = 'mqttguys'
-    
-    FIRST_RECONNECT_DELAY = 1
-    RECONNECT_RATE = 2
-    MAX_RECONNECT_COUNT = 12
-    MAX_RECONNECT_DELAY = 60
-
+    # Connect to MQTT-Broker as Client
+    # Return-Code 0 = Successfully connected
     def connect_mqtt(self):
+        # nested method of client executed on connection attempt
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
-                print("Connected to MQTT Broker!")
+                logging.info("Successfully connected to MQTT-Broker")
+                self.connected = True
             else:
-                print("Failed to connect, return code %d\n", rc)
+                logging.info("Failed to connect to MQTT-Broker with return-code {rc}")
+                self.connected = False
         # Set Connecting Client ID
-        client = mqtt_client.Client(self.client_id)
-        client.username_pw_set(self.username, self.password)
-        client.on_connect = on_connect
-        client.connect(self.broker, self.port)
-        return client
+        self.client.username_pw_set(self.username, self.password)
+        self.client.on_connect = on_connect
+        try:
+            result = self.client.connect(self.host, self.port)
+        except Exception as e:
+            result = "Failed to connect with: " + str(e)
+        logging.info("result of connection attempt at " + str(time.time()) + ": {result}")
 
+    # Disconnection Handling with MQTT-Broker
+    # Attempts reconnect according to parameters below
     def on_disconnect(self, client, userdata, rc):
+        FIRST_RECONNECT_DELAY = 1
+        RECONNECT_RATE = 2
+        MAX_RECONNECT_COUNT = 12
+        MAX_RECONNECT_DELAY = 60
+        self.connected = False
+        
         logging.info("Disconnected with result code: %s", rc)
         reconnect_count, reconnect_delay = 0, FIRST_RECONNECT_DELAY
         while reconnect_count < MAX_RECONNECT_COUNT:
@@ -34,7 +41,7 @@ class Broker:
             time.sleep(reconnect_delay)
 
             try:
-                client.reconnect()
+                self.client.reconnect()
                 logging.info("Reconnected successfully!")
                 return
             except Exception as err:
@@ -45,29 +52,78 @@ class Broker:
             reconnect_count += 1
         logging.info("Reconnect failed after %s attempts. Exiting...", reconnect_count)
 
-    def publish(self, client):
-        msg_count = 1
-        while True:
+    def publish(self, topic, message):
+        for attempt in range(0, 5):
             time.sleep(1)
-            msg = f"messages: {msg_count}"
-            result = client.publish(topic, msg)
-            # result: [0, 1]
+            result = self.client.publish(topic, message)
             status = result[0]
             if status == 0:
-                print(f"Send `{msg}` to topic `{topic}`")
-            else:
-                print(f"Failed to send message to topic {topic}")
-            msg_count += 1
-            if msg_count > 5:
+                #print(f"Send `{message}` to topic `{topic}` on attempt {attempt}")
                 break
-
-    def subscribe(self, topic, client: mqtt_client):
-        def on_message(client, userdata, msg):
-            print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
-            self.queue.append(msg.payload.decode())
-
-        client.subscribe(topic)
-        client.on_message = on_message
+            else:
+                #print(f"Failed to send message to topic {topic}")
+                pass
     
-    def __init__(self):
+    def is_connected(self):
+        return self.connected
+
+    # Attempts to connect to MQTT-Broker and starts the Client-Loop if successful
+    def connect(self):
+        self.connect_mqtt()
+        
+        if self.connected:
+            self.client.loop_start()
+    
+    # Disconnects from Broker
+    def disconnect(self):
+        if self.connected:
+            self.connected = False
+            self.client.loop_stop()
+            time.sleep(0.1)
+            self.client.disconnect()
+            logging.info("Disconnected from MQTT-Broker")
+
+    # Subscribe to a topic on the connected broker
+    def subscribe(self, topic:str):
+        if self.connected:
+            def on_message(client, userdata, msg):
+                self.queue.append((msg.topic, msg.payload.decode()))
+            try:
+                self.client.subscribe(topic)
+                self.client.on_message = on_message
+            except Exception as e:
+                logging.info("Could not subscribe to {topic}")
+                logging.exception(e)
+                return
+            logging.info("subscribed to {topic} successfully")
+    
+    # Attempts to read the config file
+    def read_config_file(self):
+        configs = {}
+        try:
+            with open("python/src/mqtt/config.json", "r") as config_file:
+                configs = json.loads(config_file.read())
+        except Exception as e:
+            logging.exception(e)
+        return configs
+    
+    def __init__(self, host=None, client_id=None, port=None, username=None, password=None):
+        configs = self.read_config_file()
+        # Use input-parameters, if not provided try to read the config-file instead
+        if host == None: self.host = configs['host']
+        else: self.host = host
+        if client_id == None: self.client_id = configs['client_id']
+        else: self.client_id = client_id
+        if port == None: self.port = configs['port']
+        else: self.port = port
+        if username == None: self.username = configs['username']
+        else: self.username = username
+        if password == None: self.password = configs['password']
+        else: self.password = password
+        
+        if self.host == None or self.client_id == None or self.port == None:
+            logging.warning("MQTT-Broker may be improperly configured")
+
+        self.connected = False
         self.queue = []
+        self.client = mqtt_client.Client(self.client_id)
