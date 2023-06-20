@@ -87,7 +87,7 @@ def Hello():
 
 # Request Send-JSON
 
-@app.route('/json_test', methods=['POST'])
+@app.route('/json_input', methods=['POST'])
 def handle_json():
     data = request.json
     #print(data)
