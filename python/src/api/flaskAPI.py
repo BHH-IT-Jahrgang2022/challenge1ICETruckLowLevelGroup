@@ -69,7 +69,7 @@ with app.app_context():
 
 # Endpoint
 
-@app.route("/")
+@app.route("/", methods=['GET'])
 
 def Hello():
     return "Help, I'm alive...", 200
