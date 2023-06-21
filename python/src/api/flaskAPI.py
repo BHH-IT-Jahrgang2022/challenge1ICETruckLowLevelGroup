@@ -46,7 +46,7 @@ class Temperature(db.Model):
     __tablename__ = "data"
 
     zeitpunkt:int = db.Column(db.BIGINT , primary_key=True)
-    sensor_id:str = db.Column(db.VARCHAR(20))
+    sensor_id:int = db.Column(db.INT)
     sensor_name:str = db.Column(db.VARCHAR(20))  
     temperatur:float = db.Column(db.FLOAT)
 
@@ -108,7 +108,7 @@ def get_json():
         all_posts = []
     
     finally:
-        return jsonify(all_posts), return_code
+        return return_message, return_code, jsonify(all_posts)
 
 # Query all data of one sensor
 @app.route("/get_sensor/<sensor_nr>", methods=['GET'])
