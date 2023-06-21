@@ -12,18 +12,20 @@ class Broker:
         def on_connect(client, userdata, flags, rc):
             if rc == 0:
                 logging.info("Successfully connected to MQTT-Broker")
-                self.connected = True
             else:
                 logging.info("Failed to connect to MQTT-Broker with return-code {rc}")
-                self.connected = False
         # Set Connecting Client ID
         self.client.username_pw_set(self.username, self.password)
         self.client.on_connect = on_connect
+        result = 1
         try:
             result = self.client.connect(self.host, self.port)
         except Exception as e:
-            result = "Failed to connect with: " + str(e)
-        logging.info("result of connection attempt at " + str(time.time()) + ": {result}")
+            logging.error("Failed to connect with: " + str(e))
+        if result == 0:
+            self.connected = True
+        else:
+            self.connected = False
 
     # Disconnection Handling with MQTT-Broker
     # Attempts reconnect according to parameters below
@@ -58,10 +60,10 @@ class Broker:
             result = self.client.publish(topic, message)
             status = result[0]
             if status == 0:
-                #print(f"Send `{message}` to topic `{topic}` on attempt {attempt}")
+                logging.info(f"Send `{message}` to topic `{topic}` on attempt {attempt}")
                 break
             else:
-                #print(f"Failed to send message to topic {topic}")
+                logging.warning(f"Failed to send message to topic {topic}")
                 pass
     
     def is_connected(self):
