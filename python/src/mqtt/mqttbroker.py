@@ -60,10 +60,10 @@ class Broker:
             result = self.client.publish(topic, message)
             status = result[0]
             if status == 0:
-                #print(f"Send `{message}` to topic `{topic}` on attempt {attempt}")
+                logging.info(f"Send `{message}` to topic `{topic}` on attempt {attempt}")
                 break
             else:
-                #print(f"Failed to send message to topic {topic}")
+                logging.warning(f"Failed to send message to topic {topic}")
                 pass
     
     def is_connected(self):
