@@ -108,36 +108,62 @@ def handle_json():
 # Request Get-JSON
 @app.route("/get_json", methods=['GET'])
 def get_json():
-    all_posts = Temperature.query.all()
+    return_code = 200
+    return_message = "Success!"
+    try:
+        all_posts = Temperature.query.all()
     
+    except Exception as e:
+        return_code = 400
+        return_message = str(e)
+        all_posts = []
     
-    return list_to_json(all_posts)
+    finally:
+        return return_message, return_code, list_to_json(all_posts)
 
 # Query all data of one sensor
 @app.route("/get_sensor/<sensor_nr>", methods=['GET'])
 def get_sensor(sensor_nr):
-    allposts_one_sensor = db.session.query(Temperature).filter(Temperature.sensor_id == sensor_nr)
-    return list_to_json(allposts_one_sensor)
+    return_code = 200
+    return_message = "Success!"
+    try:
+        allposts_one_sensor = db.session.query(Temperature).filter(Temperature.sensor_id == sensor_nr)
+    
+    except Exception as e:
+        return_code = 400
+        return_message = str(e)
+        allposts_one_sensor = []
+    
+    finally:
+        return return_message, return_code, list_to_json(allposts_one_sensor)
+    
 
 # Query for a timeintervall
 @app.route("/get_intervall")
 def request_intervall():
     requestParam = request.json
-    if requestParam["SensorId"] == "":
-        if requestParam["TimeBegin"] != "" and requestParam["TimeEnd"] != "":
-            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.zeitpunkt <= requestParam["TimeEnd"])
-        elif requestParam["TimeBegin"] == "":
-            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt <= requestParam["TimeEnd"])
-        else:
-            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"])
+    return_code = 200
+    return_message = "Success!"
+    try:
+        if requestParam["SensorId"] == "":
+            if requestParam["TimeBegin"] != "" and requestParam["TimeEnd"] != "":
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.zeitpunkt <= requestParam["TimeEnd"])
+            elif requestParam["TimeBegin"] == "":
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt <= requestParam["TimeEnd"])
+            else:
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"])
 
-    else:
-        if requestParam["TimeBegin"] != "" and requestParam["TimeEnd"] != "":
-            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.zeitpunkt <= requestParam["TimeEnd"], Temperature.sensor_id == requestParam["SensorId"])
-        elif requestParam["TimeBegin"] == "":
-            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt <= requestParam["TimeEnd"], Temperature.sensor_id == requestParam["SensorId"])
         else:
-            query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.sensor_id == requestParam["SensorId"])
-
-    return list_to_json(query_result)
+            if requestParam["TimeBegin"] != "" and requestParam["TimeEnd"] != "":
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.zeitpunkt <= requestParam["TimeEnd"], Temperature.sensor_id == requestParam["SensorId"])
+            elif requestParam["TimeBegin"] == "":
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt <= requestParam["TimeEnd"], Temperature.sensor_id == requestParam["SensorId"])
+            else:
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.sensor_id == requestParam["SensorId"])
+    except Exception as e:
+        return_code = 400
+        return_message = str(e)
+        query_result = []
+    finally:
+        return return_message, return_code, list_to_json(query_result)
 
