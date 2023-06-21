@@ -38,16 +38,6 @@ def to_json(inst, cls):
             d[c.name] = v
     return json.dumps(d)
 
-def list_to_json(query):
-    result = {}
-    index = 0
-    for temp in query:
-        result[index] = temp.json
-        index += 1
-    
-    if query == None:
-        return jsonify({}), 404
-    return jsonify(result)
 
 # Create database with its table and columns
 @dataclass
