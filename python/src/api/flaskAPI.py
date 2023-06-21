@@ -108,7 +108,7 @@ def get_json():
         all_posts = []
     
     finally:
-        return return_message, return_code, jsonify(all_posts)
+        return jsonify(all_posts), return_code
 
 # Query all data of one sensor
 @app.route("/get_sensor/<sensor_nr>", methods=['GET'])
@@ -124,7 +124,7 @@ def get_sensor(sensor_nr):
         allposts_one_sensor = []
     
     finally:
-        return return_message, return_code, jsonify(allposts_one_sensor)
+        return jsonify(allposts_one_sensor), return_code
     
 
 # Query for a timeintervall
@@ -154,5 +154,5 @@ def request_intervall():
         return_message = str(e)
         query_result = []
     finally:
-        return return_message, return_code, jsonify(query_result)
+        return jsonify(query_result), return_code
 
