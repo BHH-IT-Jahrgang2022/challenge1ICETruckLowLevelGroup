@@ -3,17 +3,20 @@ import threading
 import time
 import json
 import requests
+import logging
 
 class MQTTController:
-    def save_temp(self, temp):
+    def save_temp(self, topic:str, temp:float):
         try:
             # integer conversion converts Python Unix with Mili to standard Unix-Second-Timestamp
-            data_to_save = {'timestamp': int(time.time()), 'sensor_id': "sens_01", 'temperature': float(temp)}
+            data_to_save = {'timestamp': int(time.time()), 'sensor_id': topic, 'temperature': temp}
             json_data = json.dumps(data_to_save)
             # Add API Endpoint here
-            request = requests.post("", data=json_data)
-            print("status: " + request.status_code())
-            print("text: " + request.text())
+            request = requests.post("http://127.0.0.1:5000/json_test", data=json_data)
+            status = request.status_code
+            text = request.text
+            if status != 200:
+                logging.warning(status + ": " + text)
 
         except Exception as e:
             print(e)
@@ -25,14 +28,9 @@ class MQTTController:
         def listen():
             while self.listening:
                 time.sleep(0.01)
-                if self.broker.queue:
+                if self.broker.queue.__len__() > 0:
                     topic, temp = self.broker.queue.pop()
-                    print(topic)
-                    print(temp)
-                    # integer conversion converts Python Unix with Mili to standard Unix-Second-Timestamp
-                    data_to_save = {'timestamp': int(time.time()), 'sensor_id': "sens_01", 'temperature': float(temp)}
-                    print(data_to_save)
-                    json_data = json.dumps(data_to_save)
+                    self.save_temp(topic, float(temp))
                     #self.save_temp(self.broker.queue.pop())
         if not self.listening:
             self.listening = True
@@ -75,7 +73,7 @@ class MQTTController:
                     if self.broker.is_connected():
                         print("Connected successfully")
                     else:
-                        print("Error on connection attemp")
+                        print("Error on connection attempt")
             if input1.__len__() > 9:
                 if input1[:9] == "subscribe":
                     if input1[9] == " ":
@@ -205,11 +203,11 @@ class MQTTController:
 
     def start_challenge(self):
         try:
-            connected = self.broker.connect()
+            self.broker.connect()
         except Exception as e:
             print(e)
         time.sleep(3)
-        if connected.__len__() == 0:
+        if self.broker.is_connected():
             self.broker.subscribe("sensors/ESP32Sense1/temp/data/")
             self.broker.subscribe("sensors/ESP32Sense2/temp/data/")
             self.broker.subscribe("sensors/ESP32Sense3/temp/data/")
