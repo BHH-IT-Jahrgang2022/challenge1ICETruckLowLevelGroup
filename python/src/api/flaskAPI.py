@@ -1,9 +1,8 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select
 import sqlite3
 import json
-import jsonify
 from dataclasses import dataclass
 
 
@@ -13,7 +12,7 @@ db = SQLAlchemy()
 # create the app
 app = Flask(__name__)
 # configure the SQLite database, relative to the app instance folder
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////home//lazaro/test.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///./test.db"
 # initialize the app with the extension
 db.init_app(app)
 
@@ -48,7 +47,7 @@ def list_to_json(query):
     
     if query == None:
         return jsonify({}), 404
-    return json.dumps(result)
+    return jsonify(result)
 
 # Create database with its table and columns
 @dataclass
@@ -80,7 +79,7 @@ with app.app_context():
 
 # Endpoint
 
-@app.route("")
+@app.route("/")
 
 def Hello():
     return "Help, I'm alive...", 200
@@ -119,7 +118,7 @@ def get_json():
         all_posts = []
     
     finally:
-        return return_message, return_code, list_to_json(all_posts)
+        return jsonify(all_posts), return_code
 
 # Query all data of one sensor
 @app.route("/get_sensor/<sensor_nr>", methods=['GET'])
@@ -135,7 +134,7 @@ def get_sensor(sensor_nr):
         allposts_one_sensor = []
     
     finally:
-        return return_message, return_code, list_to_json(allposts_one_sensor)
+        return return_message, return_code, jsonify(allposts_one_sensor)
     
 
 # Query for a timeintervall
@@ -165,5 +164,5 @@ def request_intervall():
         return_message = str(e)
         query_result = []
     finally:
-        return return_message, return_code, list_to_json(query_result)
+        return return_message, return_code, jsonify(query_result)
 
