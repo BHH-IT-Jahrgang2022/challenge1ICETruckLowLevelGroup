@@ -80,10 +80,10 @@ with app.app_context():
 
 # Endpoint
 
-@app.route("/test")
+@app.route("")
 
 def Hello():
-    return "Hello World"
+    return "Help, I'm alive...", 200
 
 # Request Send-JSON
 
