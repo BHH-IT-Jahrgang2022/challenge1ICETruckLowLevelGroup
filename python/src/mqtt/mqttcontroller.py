@@ -12,7 +12,7 @@ class MQTTController:
             data_to_save = {'timestamp': int(time.time()), 'sensor_id': topic, 'temperature': temp}
             json_data = json.dumps(data_to_save)
             # Add API Endpoint here
-            request = requests.post("http://127.0.0.1:5000/json_test", data=json_data)
+            request = requests.post("https://api.alpaka.fyi/json_input", data=json_data)
             status = request.status_code
             text = request.text
             if status != 200:
