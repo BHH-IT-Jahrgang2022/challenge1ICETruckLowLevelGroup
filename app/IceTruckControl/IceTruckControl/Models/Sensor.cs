@@ -16,17 +16,5 @@ namespace IceTruckControl.Models
         public float CurrentTempMeasured { get; set; }
         // TODO: Do some Unix Timestamp Magic in set method
         public DateTime TimeRecorded { get; set; }
-        public Sensor(String SensorName)
-        {
-            this.SensorName = SensorName;
-        }
-        
-        public void SetNewMeasurement(float TempMeasured)
-        {
-            TimeRecorded = DateTime.Now;
-            CurrentTempMeasured = TempMeasured;
-            Debug.WriteLine($"Measured {TempMeasured}°C at {TimeRecorded}");
-        }
-
     }
 }
