@@ -110,14 +110,29 @@ def get_json():
     finally:
         return jsonify(all_posts), return_code
 
+@app.route("/get_latest/<sensor_id>", methods=['GET'])
+def get_latest_from_sensor(sensor_id):
+    return_code = 200
+    return_message = "Success!"
+    try:
+        print("huhu")
+        latest_from_one_sensor = db.session.query(Temperature).filter(Temperature.sensor_id == sensor_id).order_by(Temperature.zeitpunkt).all()[-1]
+        print(latest_from_one_sensor)
+    except Exception as e:
+        return_code = 400
+        return_message = str(e)
+        latest_from_one_sensor = []
+    finally:
+        return jsonify(latest_from_one_sensor), return_code
+
 # Query all data of one sensor
 @app.route("/get_sensor/<sensor_nr>", methods=['GET'])
 def get_sensor(sensor_nr):
     return_code = 200
     return_message = "Success!"
     try:
-        allposts_one_sensor = db.session.query(Temperature).filter(Temperature.sensor_id == sensor_nr)
-    
+        allposts_one_sensor = db.session.query(Temperature).filter(Temperature.sensor_id == sensor_nr).order_by(Temperature.zeitpunkt).all()
+        print(allposts_one_sensor)
     except Exception as e:
         return_code = 400
         return_message = str(e)
@@ -136,19 +151,19 @@ def request_intervall():
     try:
         if requestParam["SensorId"] == "":
             if requestParam["TimeBegin"] != "" and requestParam["TimeEnd"] != "":
-                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.zeitpunkt <= requestParam["TimeEnd"])
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.zeitpunkt <= requestParam["TimeEnd"]).all()
             elif requestParam["TimeBegin"] == "":
-                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt <= requestParam["TimeEnd"])
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt <= requestParam["TimeEnd"]).all()
             else:
-                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"])
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"]).all()
 
         else:
             if requestParam["TimeBegin"] != "" and requestParam["TimeEnd"] != "":
-                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.zeitpunkt <= requestParam["TimeEnd"], Temperature.sensor_id == requestParam["SensorId"])
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.zeitpunkt <= requestParam["TimeEnd"], Temperature.sensor_id == requestParam["SensorId"]).all()
             elif requestParam["TimeBegin"] == "":
-                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt <= requestParam["TimeEnd"], Temperature.sensor_id == requestParam["SensorId"])
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt <= requestParam["TimeEnd"], Temperature.sensor_id == requestParam["SensorId"]).all()
             else:
-                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.sensor_id == requestParam["SensorId"])
+                query_result = db.session.query(Temperature).filter(Temperature.zeitpunkt >= requestParam["TimeBegin"], Temperature.sensor_id == requestParam["SensorId"]).all()
     except Exception as e:
         return_code = 400
         return_message = str(e)
