@@ -61,6 +61,25 @@ class Temperature(db.Model):
         self.temperatur = temperatur
 
 
+@dataclass
+class Motor(db.Model):
+    __tablename__ = "motor_data"
+
+    motor_id:int = db.Column(db.INT, primary_key=True)
+    motor_type:str = db.Column(db.VARCHAR(20))
+    setting:int = db.Column(db.INT)
+    timestamp:int = db.Column(db.BIGINT, primary_key=True)
+
+    @property
+    def json(self):
+        return to_json(self, self.__class__)
+    
+    def __init__(self, motor_id, motor_type, setting, timestamp):
+        self.motor_id = motor_id
+        self.motor_type = motor_type
+        self.setting = setting
+        self.timestamp = timestamp
+
 
 with app.app_context():
     db.drop_all()
@@ -93,14 +112,47 @@ def handle_json():
 
     finally:
         return return_message, return_code   
+    
 
-# Request Get-JSON
+@app.route('/input_motor', methods=['POST'])
+def input_motor():
+    data = request.json
+    return_code = 200
+    return_message = "Saved successfully"
+
+    try:
+        conv_data = Motor(**data)
+        db.session.add(conv_data)
+        db.session.commit()
+
+    except Exception as e:
+        return_code = 400
+        return_message = str(e)
+
+    finally:
+        return return_message, return_code
+    
+@app.route('/get_motor', methods=['GET'])
+def get_motor():
+    return_code = 200
+    
+    try:
+        motor_data = Motor.query.order_by(Motor.timestamp, Motor.motor_id).all()
+
+    except Exception as e:
+        return_code = 400
+        motor_data = []
+
+    finally:
+        return jsonify(motor_data), return_code
+
+# Request Get-JSON ==> returns all the temperatures
 @app.route("/get_json", methods=['GET'])
 def get_json():
     return_code = 200
     return_message = "Success!"
     try:
-        all_posts = Temperature.query.order_by(Temperature.temperatur, Temperature.sensor_id).all()
+        all_posts = Temperature.query.order_by(Temperature.zeitpunkt, Temperature.sensor_id).all()
     
     except Exception as e:
         return_code = 400
