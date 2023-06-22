@@ -100,7 +100,7 @@ def get_json():
     return_code = 200
     return_message = "Success!"
     try:
-        all_posts = Temperature.query.all()
+        all_posts = Temperature.query.order_by(Temperature.temperatur, Temperature.sensor_id).all()
     
     except Exception as e:
         return_code = 400
