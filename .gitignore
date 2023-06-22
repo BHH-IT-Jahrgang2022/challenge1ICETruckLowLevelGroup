@@ -7,3 +7,4 @@ __pycache__
 test.db
 windoof.py
 python/src/api/instance
+python/src/.DS_Store
