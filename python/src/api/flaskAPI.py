@@ -115,9 +115,7 @@ def get_latest_from_sensor(sensor_id):
     return_code = 200
     return_message = "Success!"
     try:
-        print("huhu")
         latest_from_one_sensor = db.session.query(Temperature).filter(Temperature.sensor_id == sensor_id).order_by(Temperature.zeitpunkt).all()[-1]
-        print(latest_from_one_sensor)
     except Exception as e:
         return_code = 400
         return_message = str(e)
@@ -132,7 +130,6 @@ def get_sensor(sensor_nr):
     return_message = "Success!"
     try:
         allposts_one_sensor = db.session.query(Temperature).filter(Temperature.sensor_id == sensor_nr).order_by(Temperature.zeitpunkt).all()
-        print(allposts_one_sensor)
     except Exception as e:
         return_code = 400
         return_message = str(e)
