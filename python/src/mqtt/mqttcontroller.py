@@ -184,18 +184,18 @@ class MQTTController:
             return 255
         return value
     
-    def persist_motor_data(self, motor_type, value, id=1):
+    def persist_motor_data(self, motor_type, value, motor_id=1):
         header = {'Content-type': 'application/json', 'Authorization':'None', 'Connection': 'Keep-Alive', 'Host':'api.alpaka.fyi'}
         url = "https://api.alpaka.fyi/input_motor"
 
         motor_data = {
             "timestamp": int(time.time()),
-            "motor_id": id,
-            "type": motor_type,
+            "motor_id": motor_id,
+            "motor_type": motor_type,
             "setting": value
         }
 
-        response = requests.post(url, data=motor_data, headers=header, verify=False)
+        response = requests.post(url, data=json.dumps(motor_data), headers=header, verify=False)
         logging.info(str(response.status_code) + ": " + response.text)
 
     def challenge_loop(self):
