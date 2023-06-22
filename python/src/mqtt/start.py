@@ -1,4 +1,5 @@
 import mqttcontroller as con
+import logging
 
 mqtt_controller = con.MQTTController()
 
@@ -12,9 +13,12 @@ parser.add_argument("-c", "--challenge", type=str)
 args = parser.parse_args()
 target_temp = args.temperature
 
-logging_enabled = False
-if args.logging != None:
-    logging_enabled = args.logging = "enabled"
+log_level = args.logging
+
+if log_level == None:
+    logging.basicConfig(level=logging.CRITICAL)
+elif log_level == "info":
+    logging.basicConfig(level=logging.INFO)
 
 is_challenge = False
 if args.challenge != None:
