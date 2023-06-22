@@ -46,7 +46,7 @@ class Temperature(db.Model):
     __tablename__ = "data"
 
     zeitpunkt:int = db.Column(db.BIGINT , primary_key=True)
-    sensor_id:int = db.Column(db.INT)
+    sensor_id:int = db.Column(db.INT, primary_key=True)
     sensor_name:str = db.Column(db.VARCHAR(20))  
     temperatur:float = db.Column(db.FLOAT)
 
