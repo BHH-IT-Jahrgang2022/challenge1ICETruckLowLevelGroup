@@ -29,7 +29,7 @@ class MQTTController:
                 logging.warning(str(status) + ": " + text)
 
         except Exception as e:
-            print(e)
+            logging.exception(e)
 
     def stop_listening(self):
         self.listening = False
