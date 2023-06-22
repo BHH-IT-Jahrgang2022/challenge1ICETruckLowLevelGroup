@@ -233,6 +233,8 @@ class MQTTController:
             self.challenge_running = True
             self.challenge_loop()
 
+            self.broker.publish("motors/ESP32Motors1/fan/control/", 0)
+            self.broker.publish("motors/ESP32Motors1/servo/control/", 0)
             self.stop_listening()
 
     def __init__(self):
