@@ -180,6 +180,8 @@ class MQTTController:
         value = int(dif * 255 / max_dif)
         if math.isnan(value):
             return 255
+        elif value > 255:
+            return 244
         return value
 
     def challenge_loop(self):
