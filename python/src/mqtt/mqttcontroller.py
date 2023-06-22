@@ -181,7 +181,7 @@ class MQTTController:
         if math.isnan(value):
             return 255
         elif value > 255:
-            return 244
+            return 255
         return value
 
     def challenge_loop(self):
