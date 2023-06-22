@@ -212,7 +212,7 @@ class MQTTController:
                     time.sleep(0.5)
                     self.broker.publish("motors/ESP32Motors1/fan/control/", fan_speed)
 
-    def start_challenge(self, target_temp=-18, logging_enabled=False):
+    def start_challenge(self, target_temp=-18):
         try:
             self.broker.connect()
         except Exception as e:
