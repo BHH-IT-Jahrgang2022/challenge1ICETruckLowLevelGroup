@@ -192,7 +192,6 @@ class MQTTController:
             time.sleep(0.1)
             if self.broker.queue:
                 last_three[index] = float(self.broker.queue.pop()[1])
-                print(last_three)
                 if index == 2: index = 0
                 else: index += 1
 
@@ -217,7 +216,7 @@ class MQTTController:
         try:
             self.broker.connect()
         except Exception as e:
-            print(e)
+            logging.exception(e)
         time.sleep(3)
         if self.broker.is_connected():
             self.broker.subscribe("sensors/ESP32Sense1/temp/data/")
