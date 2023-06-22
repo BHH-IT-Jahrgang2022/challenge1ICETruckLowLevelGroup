@@ -1,4 +1,5 @@
 import mqttcontroller as con
+import urllib3
 import logging
 
 mqtt_controller = con.MQTTController()
@@ -17,12 +18,14 @@ log_level = args.logging
 
 if log_level == None:
     logging.basicConfig(level=logging.CRITICAL)
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 elif log_level == "info":
     logging.basicConfig(level=logging.INFO)
 elif log_level == "warning":
     logging.basicConfig(level=logging.WARNING)
 elif log_level == "error":
     logging.basicConfig(level=logging.ERROR)
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 is_challenge = False
 if args.challenge != None:
