@@ -214,9 +214,9 @@ class MQTTController:
                 average_temp = sum(last_three) / last_three.__len__()
 
                 servo_setting = self.servo_calc(average_temp)
-                self.persist_motor_data("servo", servo_setting)
+                self.persist_motor_data("servo", servo_setting, motor_id=2)
                 if servo_setting != last_servo_setting:
-                    self.broker.publish("motors/ESP32Motors1/servo/control/", servo_setting, motor_id=2)
+                    self.broker.publish("motors/ESP32Motors1/servo/control/", servo_setting)
                 last_servo_setting = servo_setting
                 time.sleep(0.1)
                 
