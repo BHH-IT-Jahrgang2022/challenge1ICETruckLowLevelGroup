@@ -183,11 +183,27 @@ class MQTTController:
         elif value > 255:
             return 255
         return value
+    
+    def persist_motor_data(self, motor_type, value, motor_id=1):
+        header = {'Content-type': 'application/json', 'Authorization':'None', 'Connection': 'Keep-Alive', 'Host':'api.alpaka.fyi'}
+        url = "https://api.alpaka.fyi/input_motor"
+
+        motor_data = {
+            "timestamp": int(time.time()),
+            "motor_id": motor_id,
+            "motor_type": motor_type,
+            "setting": value
+        }
+
+        response = requests.post(url, data=json.dumps(motor_data), headers=header, verify=False)
+        logging.info(str(response.status_code) + ": " + response.text)
 
     def challenge_loop(self):
         last_three = [self.target_temp, self.target_temp, self.target_temp]
         fan_running = False
         index = 0
+        last_servo_setting = 0
+        last_fan_speed = 0
         while self.challenge_running:
             time.sleep(0.1)
             if self.broker.queue:
@@ -196,14 +212,19 @@ class MQTTController:
                 else: index += 1
 
                 average_temp = sum(last_three) / last_three.__len__()
-                
-                self.broker.publish("motors/ESP32Motors1/servo/control/", self.servo_calc(average_temp))
+
+                servo_setting = self.servo_calc(average_temp)
+                self.persist_motor_data("servo", servo_setting)
+                if servo_setting != last_servo_setting:
+                    self.broker.publish("motors/ESP32Motors1/servo/control/", servo_setting)
+                last_servo_setting = servo_setting
                 time.sleep(0.1)
                 
                 fan_speed = self.fan_calc(average_temp)
-
+                self.persist_motor_data("fan", fan_speed)
                 if fan_running:
-                    self.broker.publish("motors/ESP32Motors1/fan/control/", fan_speed)
+                    if fan_speed != last_fan_speed:
+                        self.broker.publish("motors/ESP32Motors1/fan/control/", fan_speed)
                 elif fan_speed == 0:
                     self.broker.publish("motors/ESP32Motors1/fan/control/", fan_speed)
                     fan_running = False
@@ -211,6 +232,7 @@ class MQTTController:
                     self.broker.publish("motors/ESP32Motors1/fan/control/", 170)
                     time.sleep(0.5)
                     self.broker.publish("motors/ESP32Motors1/fan/control/", fan_speed)
+                last_fan_speed = fan_speed
 
     def start_challenge(self, target_temp=-18):
         try:
