@@ -216,12 +216,12 @@ class MQTTController:
                 servo_setting = self.servo_calc(average_temp)
                 self.persist_motor_data("servo", servo_setting)
                 if servo_setting != last_servo_setting:
-                    self.broker.publish("motors/ESP32Motors1/servo/control/", servo_setting)
+                    self.broker.publish("motors/ESP32Motors1/servo/control/", servo_setting, motor_id=2)
                 last_servo_setting = servo_setting
                 time.sleep(0.1)
                 
                 fan_speed = self.fan_calc(average_temp)
-                self.persist_motor_data("fan", fan_speed)
+                self.persist_motor_data("fan", fan_speed, motor_id=1)
                 if fan_running:
                     if fan_speed != last_fan_speed:
                         self.broker.publish("motors/ESP32Motors1/fan/control/", fan_speed)
