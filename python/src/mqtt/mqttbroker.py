@@ -90,6 +90,7 @@ class Broker:
         if self.connected:
             def on_message(client, userdata, msg):
                 self.queue.append((msg.topic, msg.payload.decode()))
+                logging.info(str(msg.topic) + ": " + str(msg.payload.decode()))
             try:
                 self.client.subscribe(topic)
                 self.client.on_message = on_message
